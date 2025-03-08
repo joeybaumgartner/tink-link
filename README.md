@@ -1,3 +1,4 @@
+![TinkLink PCB](http://url/to/img.png)
 **TinkLink** is an open source project to add Wi-Fi remote control capability to the [RetroTINK-4K](https://www.retrotink.com/product-page/retrotink-4k). Utilizing an ESP32-C3 and a custom HD-15 PCB designed by [Jeff Chen](https://github.com/jeffqchen), the TinkLink connects to the Tink4K's HD-15 input and allows users to send serial UART commands from virtually any device with WIFI and a web browser to simulate the Tink4K's remote control functions. A passthrough female VGA port allows video signals to connect to the Tink4K alongside the TinkLink's Serial UART commands.
 
 The TinkLink is built to run on the [Seeed Studio's Xiao ESP32-C3](https://www.seeedstudio.com/Seeed-XIAO-ESP32C3-p-5431.html) MCU, as well as [TENSTARROBOT's C3 Super Mini](https://www.aliexpress.us/item/3256807499475367.html).
@@ -44,5 +45,5 @@ UART RX: While wired to receive data back from the Tink4K, it is currently an un
 - On back face of PCB, solder bridge both triangle pads to center pads to use Xiao ESP32-C3, or solder unlabeled pads to center pads for C3 Super Mini configuration.
 - Align Xiao or C3 Super Mini MCU to top right pins on front face of PCB. Attach MCU to PCB by soldering 5v, Ground, 3.3v, TX and RX pins. Note that The Super Mini MCU will have TX and RX on the bottom left of the PCB, while the Xiao MCU will have TX and RX on opposing left and right bottom corners.
 
-## **Connecting to the RetroTINK-4K:**
+## **Connecting to the RetroTINK-4K**
 Use a VGA cable to connect the TX side of the board's HD-15 port to the RetroTink-4K's HD-15 input. Apply power to the MCU using a standard 5v power supply and USB-C cable. Passthrough VGA video and serial communication devices will plug into the TinkLink PCB's RX HD-15 jack. From your WIFI enabled device, connect to "TinkLink-HotSpot" and a captive portal page should launch. If no page launches, open your browser and navigate to "tinklink.local". You should see the RetroTINK remote in your browser.
