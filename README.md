@@ -2,7 +2,7 @@
 
 The TinkLink is built to run on the [Seeed Studio's Xiao ESP32-C3](https://www.seeedstudio.com/Seeed-XIAO-ESP32C3-p-5431.html) MCU, as well as [TENSTARROBOT's C3 Super Mini](https://www.aliexpress.us/item/3256807499475367.html).
 
-TinkLink is coded in MicroPython and relies on the [Microdot](https://github.com/miguelgrinberg/microdot} web server library, as well as some DNS handling code heavily borrowed from [Mycropython-Captiveportal] (https://github.com/metachris/micropython-captiveportal).
+TinkLink is coded in MicroPython and relies on the [Microdot](https://github.com/miguelgrinberg/microdot) web server library, as well as some DNS handling code heavily borrowed from [Mycropython-Captiveportal](https://github.com/metachris/micropython-captiveportal).
 
 **Software Components**
 - _"captive_portal.py_": This handles DNS requests and is part of creating the captive portal feature.
