@@ -29,10 +29,10 @@ Your root file system will also need to contain the files outlined in the **"Sof
 
 ## **Hardware**
 
-The TinkLink is built on a PCB designed by Jeff Chen. Gerber files to have a PCB produced are located in this reposiroty in the **"PCB"** folder. 
+The TinkLink is built on a PCB designed by Jeff Chen. Gerber files to have a PCB produced are located in this repository in the **"PCB"** folder. 
 
 ### **PCB Required Components:**
-- Female VGA (HD-15) Ports x2: [Digikey K61X-E15S-NJ-VESA](https://www.digikey.com/en/products/detail/kycon-inc/K61X-E15S-NJ-VESA/10247235) or a cheaper [AliExpress Alternative](https://www.aliexpress.us/item/2255800410490932.html).
+- Female VGA (HD-15) Ports x2: [Digikey K61X-E15S-NJ-Vtory https://www.digikey.com/en/products/detail/kycon-inc/K61X-E15S-NJ-VESA/10247235) or a cheaper [AliExpress Alternative](https://www.aliexpress.us/item/2255800410490932.html).
 - 10k Ohm 0603 Surface mount resistor (for pullup on TX).
 - ESP32-C3 MCU: The TinkLink PCB is physically compatible with the [Xiao ESP32-C3](https://www.seeedstudio.com/Seeed-XIAO-ESP32C3-p-5431.html) MCU, as well as the [TENSTARROBOT's C3 Super Mini](https://www.aliexpress.us/item/3256807499475367.html).
 
