@@ -1,4 +1,4 @@
-![TinkLink PCB](https://github.com/Patrick-Working/tink-link/blob/tinklink2025/tinklinkpcb.png | width=100)
+![TinkLink PCB](https://github.com/Patrick-Working/tink-link/blob/tinklink2025/tinklinkpcb.png|width=100)
 **TinkLink** is an open source project to add Wi-Fi remote control capability to the [RetroTINK-4K](https://www.retrotink.com/product-page/retrotink-4k). Utilizing an ESP32-C3 and a custom HD-15 PCB designed by [Jeff Chen](https://github.com/jeffqchen), the TinkLink connects to the Tink4K's HD-15 input and allows users to send serial UART commands from virtually any device with WIFI and a web browser to simulate the Tink4K's remote control functions. A passthrough female VGA port allows video signals to connect to the Tink4K alongside the TinkLink's Serial UART commands.
 
 The TinkLink is built to run on the [Seeed Studio's Xiao ESP32-C3](https://www.seeedstudio.com/Seeed-XIAO-ESP32C3-p-5431.html) MCU, as well as [TENSTARROBOT's C3 Super Mini](https://www.aliexpress.us/item/3256807499475367.html).
