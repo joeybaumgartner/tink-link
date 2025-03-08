@@ -37,7 +37,7 @@ The TinkLink is built on a PCB designed by Jeff Chen. Gerber files to have a PCB
 - ESP32-C3 MCU: The TinkLink PCB is physically compatible with the [Xiao ESP32-C3](https://www.seeedstudio.com/Seeed-XIAO-ESP32C3-p-5431.html) MCU, as well as the [TENSTARROBOT's C3 Super Mini](https://www.aliexpress.us/item/3256807499475367.html).
 
 ### **TinkLink UART Notes**
-UART TX: The TinkLink sends messages over a TTL-Level, 3.3v open drain configuration output, to the RetroTINK-4K sing standard 9600 baud, "8N1" serial communication.
+UART TX: The TinkLink sends messages over a TTL-Level, 3.3v open drain configuration output, to the RetroTINK-4K using standard 9600 baud, "8N1" serial communication.
 UART RX: While wired to receive data back from the Tink4K, it is currently an unused feature.
 
 ### **Standard PCB Configuration**
