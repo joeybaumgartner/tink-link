@@ -23,7 +23,7 @@ Your ESP32-C3 file system root should have a _**"microdot"**_ folder containing:
 - _"helpers.py"_
 - _"microdot.py"_
 - _"websocket.py"_
-- _"__init__.py"_
+- _"\__init__.py"_
 
 Your root file system will also need to contain the files outlined in the **"Software Components"** section, hosted at this repository.
 
