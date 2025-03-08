@@ -14,9 +14,9 @@ TinkLink is coded in MicroPython and relies on the [Microdot](https://github.com
 - _"small-remote.png"_: A compressed PNG of the RetroTINK-4K's remote to tap on in "remote.html".
 
 **Configuring ESP32-C3 Software**
-TinkLink requires **MicroPython** to be installed on your ESP32-C3. A good tutorial for this process using the Thonnny IDE [can be found here]( https://bhave.sh/micropython-install-esp32/}.
+TinkLink requires **MicroPython** to be installed on your ESP32-C3. A good tutorial for this process using the Thonnny IDE [can be found here]( https://bhave.sh/micropython-install-esp32/).
 
-TinkLink requires [Microdot](https://github.com/miguelgrinberg/microdot}. Clone or download the required files and place them on your ESP32-C3.
+TinkLink requires [Microdot](https://github.com/miguelgrinberg/microdot). Clone or download the required files and place them on your ESP32-C3.
 Your ESP32-C3 file system root should have a _**"microdot"**_ folder containing:
 - _"helpers.py"_
 - _"microdot.py"_
