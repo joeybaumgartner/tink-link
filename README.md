@@ -12,7 +12,7 @@ TinkLink is coded in MicroPython and relies on the [Microdot](https://github.com
 - _"uart_async.py"_: Sets up and sends UART data down the ESP32-C3's GPIO pins.
 - _"remote.html"_: The main remote web page, and home to the "small-remote.png" image map and UART short name commands (pwr, prof3, etc) that web_server + uart_async use to send commands to the Tink4K.
 - _"remote.js"_: Handles WebSocket configuration for "remote.html", as well as the logic for long-press repeating command function (set to 1 second hold, 50ms repeating).
-- _"main.py"_: Configures WIFI configuration and starts the access point, along with the main asyncio task loop.
+- _"main.py"_: Configures WIFI and starts the access point, along with the main asyncio task loop.
 - _"small-remote.png"_: A compressed PNG of the RetroTINK-4K's remote to tap on in "remote.html".
 
 ### **Configuring ESP32-C3 Software**
