@@ -9,7 +9,7 @@ TinkLink is coded in MicroPython and relies on the [Microdot](https://github.com
 ## **Software Components**
 - _"captive_portal.py_": This handles DNS requests and is part of creating the captive portal feature.
 - _"web_server.py"_: Serves HTML pages and files while also handling WebSocket data transmission.
--_ "uart_async.py"_: Sets up and sends UART data down the ESP32-C3's GPIO pins.
+-_"uart_async.py"_: Sets up and sends UART data down the ESP32-C3's GPIO pins.
 - _"remote.html"_: The main remote web page, and home to the "small-remote.png" image map and UART short name commands (pwr, prof3, etc) that web_server + uart_async use to send commands to the Tink4K.
 - _"remote.js"_: Handles WebSocket configuration for "remote.html", as well as the logic for long-press repeating command function (set to 1 second hold, 50ms repeating).
 - _"main.py"_: Configures WIFI configuration and starts the access point, along with the main asyncio task loop.
