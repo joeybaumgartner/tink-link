@@ -1,7 +1,7 @@
-from microdot import Microdot, Response
-from microdot.websocket import with_websocket
-import uasyncio as asyncio
-import uart_async  # UART send functionality
+from microdot import Microdot, Response #Microdot handles web service
+from microdot.websocket import with_websocket #websocket Microdot extension
+import uasyncio as asyncio #allows aynchronous task handling
+import uart_async #async uart tx and rx and machine pin config
 
 app = Microdot()
 
@@ -29,7 +29,7 @@ async def apple_success(request):
 async def small_remote_image(request):
     image_path = '/small-remote.png'
     try:
-        def file_iterator():
+        def file_iterator(): #breaks up large files into chunks to not run out of ram
             with open(image_path, 'rb') as f:
                 while True:
                     chunk = f.read(1024)
@@ -43,29 +43,28 @@ async def small_remote_image(request):
 @app.route('/ws')
 @with_websocket
 async def ws_endpoint(request, ws):
-    """
-    This endpoint simply receives a base command (e.g. "pwr", "menu", etc.) 
-    from the client and constructs the UART command as:
-       "remote <command>  \r\n"
-    """
     print("WebSocket connection established")
     while True:
         msg = await ws.receive()
         if msg is None:
             break
-        #Special handler for needing two messages to wake / power down
+
+        # Special handler for the "pwr" command, two for the price of one message
         if msg == "pwr":
             wake_pwr = msg + " on\n"
-            uart_async.uart.write(wake_pwr.encode('utf-8'))
+            data = wake_pwr.encode('utf-8')
+            written = uart_async.uart.write(data)
             print("UART TX:", repr(wake_pwr))
-        # Construct the UART command using the base command received.
-        full_command = "remote " + msg + " \r\n"
-        written = uart_async.uart.write(full_command.encode('utf-8'))
-        if written == len(full_command):
+        
+        # Always send the general command regardless of the message
+        full_command = "remote " + msg + "\n"
+        data = full_command.encode('utf-8')
+        written = uart_async.uart.write(data)
+        if written == len(data):
             print("UART TX:", repr(full_command))
         else:
-            print(f"UART send error: {full_command.strip()}")
-        
+            print("UART send error:", repr(full_command),
+                  "bytes written:", written, "expected:", len(data))
 
 @app.route('/remote-page')
 async def remote_page(request):
@@ -90,6 +89,8 @@ async def remote_js(request):
         return Response(js, headers={'Content-Type': 'application/javascript'})
     except OSError:
         return Response("remote.js not found", status_code=404)
-
+    
 def start_web_server():
-    return asyncio.create_task(app.start_server(host='0.0.0.0', port=80))
+    # Start both the web server and the UART loopback reader concurrently.
+    server_task = asyncio.create_task(app.start_server(host='0.0.0.0', port=80))
+    return server_task
