@@ -1,4 +1,4 @@
-<img src="https://github.com/Patrick-Working/tink-link/blob/tinklink2025/images/tinklinkpcb.png" width="300" align="center"> 
+<img src="https://github.com/Patrick-Working/tink-link/blob/tinklink2025/images/tinklinkpcb.png" width="300" align="left"> 
 <img src="https://github.com/Patrick-Working/tink-link/blob/tinklink2025/images/PXL_20250309_002008740.jpg" width="300" align="center"> 
 
 
