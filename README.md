@@ -43,6 +43,7 @@ The TinkLink is built on a PCB designed by Jeff Chen. Gerber files to have a PCB
 
 ### **Standard PCB Configuration**
 <img src="https://github.com/Patrick-Working/tink-link/blob/030408ee8ff43b22a2d360c7d0949b32d40c8e6b/images/standard%20assembly.jpg" width="300"> 
+
 - On front face of PCB, solder 10k Ohm pullup resistor on "Pullup TX" pads When using external pullup resistor, ensure that internal pullup resistor is disabled in _"uart_async.py"_.
 
 - Bridge the two pads directy under the **"Pullup TX"** label to enable the pullup routing circuit.
