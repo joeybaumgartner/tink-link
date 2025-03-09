@@ -48,7 +48,7 @@ The TinkLink is built on a PCB designed by Jeff Chen. Gerber files to have a PCB
 
 - Bridge the two pads directy under the **"Pullup TX"** label to enable the pullup routing circuit.
 
-- On font face of the PCB, apply 3.3v pullup voltage by bridging the **Right 3.3v Pad** to **Center**. _(Do not use the the 5V pad option, indicated by the triangle label on the pad). _
+- On font face of the PCB, apply 3.3v pullup voltage by bridging the **Right 3.3v Pad** to **Center**. (Do not use the the 5V pad option, indicated by the triangle label on the pad).
 
 - On back face of the PCB, solder bridge both triangle pads to center pads to use Xiao ESP32-C3, or solder unlabeled pads to center pads for C3 Super Mini configuration.
 
