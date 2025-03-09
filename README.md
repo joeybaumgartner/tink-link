@@ -1,9 +1,6 @@
 <img src="https://github.com/Patrick-Working/tink-link/blob/tinklink2025/images/tinklinkpcb.png" width="300" align="left"> 
 <img src="https://github.com/Patrick-Working/tink-link/blob/tinklink2025/images/PXL_20250309_002008740~2.jpg" width="300"> 
 
-
-
-
 **TinkLink** is an open source project to add Wi-Fi remote control capability to the [RetroTINK-4K](https://www.retrotink.com/product-page/retrotink-4k). Utilizing an ESP32-C3 and a custom PCB designed by [Jeff Chen](https://github.com/jeffqchen), the TinkLink connects to the Tink4K's HD-15 input and allows users to send serial UART commands from virtually any device with WIFI and a web browser to simulate the Tink4K's remote control functions. A passthrough female VGA port allows video signals to connect to the Tink4K alongside the TinkLink's Serial UART commands.
 
 The TinkLink is built to run on the [Seeed Studio's Xiao ESP32-C3](https://www.seeedstudio.com/Seeed-XIAO-ESP32C3-p-5431.html) MCU, as well as [TENSTARROBOT's C3 Super Mini](https://www.aliexpress.us/item/3256807499475367.html).
@@ -45,7 +42,7 @@ UART TX: The TinkLink sends messages over a TTL-Level, 3.3v open drain configura
 UART RX: While wired to receive data back from the Tink4K, it is currently an unused feature.
 
 ### **Standard PCB Configuration**
-<img src="https://github.com/Patrick-Working/tink-link/blob/030408ee8ff43b22a2d360c7d0949b32d40c8e6b/images/standard%20assembly.jpg" width="300" align="left"> 
+<img src="https://github.com/Patrick-Working/tink-link/blob/030408ee8ff43b22a2d360c7d0949b32d40c8e6b/images/standard%20assembly.jpg" width="300"> 
 - On front face of PCB, solder 10k Ohm pullup resistor on "Pullup TX" pads When using external pullup resistor, ensure that internal pullup resistor is disabled in _"uart_async.py"_.
 - On font face of PCB, apply 3.3v pullup voltage by bridging the TX triangle pad to Center.
 - On back face of PCB, solder bridge both triangle pads to center pads to use Xiao ESP32-C3, or solder unlabeled pads to center pads for C3 Super Mini configuration.
