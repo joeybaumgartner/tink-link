@@ -44,8 +44,13 @@ UART RX: While wired to receive data back from the Tink4K, it is currently an un
 ### **Standard PCB Configuration**
 <img src="https://github.com/Patrick-Working/tink-link/blob/030408ee8ff43b22a2d360c7d0949b32d40c8e6b/images/standard%20assembly.jpg" width="300"> 
 - On front face of PCB, solder 10k Ohm pullup resistor on "Pullup TX" pads When using external pullup resistor, ensure that internal pullup resistor is disabled in _"uart_async.py"_.
-- On font face of PCB, apply 3.3v pullup voltage by bridging the TX triangle pad to Center.
-- On back face of PCB, solder bridge both triangle pads to center pads to use Xiao ESP32-C3, or solder unlabeled pads to center pads for C3 Super Mini configuration.
+
+- Bridge the two pads directy under the **"Pullup TX"** label to enable the pullup routing circuit.
+
+- On font face of the PCB, apply 3.3v pullup voltage by bridging the **Right 3.3v Pad** to **Center**. _(Do not use the the 5V pad option, indicated by the triangle label on the pad). _
+
+- On back face of the PCB, solder bridge both triangle pads to center pads to use Xiao ESP32-C3, or solder unlabeled pads to center pads for C3 Super Mini configuration.
+
 - Align Xiao or C3 Super Mini MCU to top right pins on front face of PCB. Attach MCU to PCB by soldering 5v, Ground, 3.3v, TX and RX pins. Note that The Super Mini MCU will have TX and RX on the bottom left of the PCB, while the Xiao MCU will have TX and RX on opposing left and right bottom corners.
 
 ## **Connecting to the RetroTINK-4K**
