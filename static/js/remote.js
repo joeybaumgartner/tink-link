@@ -17,7 +17,7 @@ function initWebSocket() {
     console.error("WebSocket error:", error);
   };
   ws.onclose = function() {
-    console.log("WebSocket closed, reconnecting in 2s...");
+    //console.log("WebSocket closed, reconnecting in 2s...");
     setTimeout(initWebSocket, 2000);
   };
 }
@@ -56,10 +56,11 @@ function handleRelease(command) {
 
 window.onload = function() {
   initWebSocket();
-  var areas = document.querySelectorAll("area");
+
+  var areas = document.querySelectorAll(".remote-btn");
   areas.forEach(function(area) {
     // Use the alt attribute as the base command.
-    var command = area.getAttribute("alt").toLowerCase();
+    var command = area.getAttribute("title").toLowerCase();
     
     // Use pointer events for unified handling.
     area.addEventListener("pointerdown", function(e) {

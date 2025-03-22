@@ -1,0 +1,147 @@
+<!DOCTYPE html>
+<html>
+  <head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1, maximum-scale=2">
+    <title>Remote</title>
+<style>
+  body {
+    margin: 0;
+    padding: 0;
+    background-color: #212121;
+    font-family: system-ui;
+  }
+  .spacer {
+    height: 5vh;
+  }
+  .centered {
+    display: block;
+    margin: 0 auto;
+    /* Disable long-press callout and text selection but allow scrolling */
+    -webkit-touch-callout: none;
+    -webkit-user-select: none;
+    -moz-user-select: none;
+    -ms-user-select: none;
+    user-select: none;
+    touch-action: auto; /* allows scrolling */
+  }
+  .footer {
+    width: 90vw;
+    margin: 0 auto 2.5vh;
+    border: 2px solid grey;
+    color: white;
+    text-align: center;
+    padding: 1rem 0;
+    box-sizing: border-box;
+  }
+  .footer a {
+    font-weight: bold;
+    color: green;
+    text-decoration: none;
+  }
+  .footer a:hover {
+    text-decoration: underline;
+  }
+  .footer .credits {
+    font-weight: normal;
+    font-size: 0.7em;
+    margin-top: 0.3rem;
+  }
+  .remote-btn {
+    fill: #fff;
+    opacity: 0%;
+  }
+</style>
+    <!-- Import external JavaScript file -->
+    <script src="/static/js/remote.js"></script>
+  </head>
+  <body oncontextmenu="return false;">
+    <!-- Top spacer -->
+    <div class="spacer"></div>
+
+    <svg version="1.1" xmlns="http://www.w3.org/2000/svg" xmlns:xlink="http://www.w3.org/1999/xlink" viewBox="0 0 341 1544">
+      <image width="341" height="1544" xlink:href="/static/images/small-remote.png"></image>
+
+        <!-- Row 1: pwr, input, output, scaler -->
+        <rect class="remote-btn" title="pwr" x="14" y="47" width="88" height="87"></rect> 
+        <rect class="remote-btn" title="input" x="120" y="49" width="56" height="32"></rect> 
+        <rect class="remote-btn" title="output" x="196" y="49" width="55" height="31"></rect> 
+        <rect class="remote-btn" title="scaler" x="271" y="49" width="56" height="31"></rect> 
+
+        <!-- SFX, adc, prof -->
+        <rect class="remote-btn" title="sfx" x="119" y="100" width="59" height="33"></rect> 
+        <rect class="remote-btn" title="adc" x="194" y="101" width="59" height="32"></rect> 
+        <rect class="remote-btn" title="prof" x="270" y="101" width="57" height="32"></rect> 
+
+        <!-- Number Buttons: prof1 through prof12 -->
+        <rect class="remote-btn" title="prof1" x="13" y="166" width="90" height="51"></rect> 
+        <rect class="remote-btn" title="prof2" x="126" y="166" width="89" height="52"></rect> 
+        <rect class="remote-btn" title="prof3" x="238" y="166" width="89" height="52"></rect> 
+        <rect class="remote-btn" title="prof4" x="13" y="236" width="90" height="53"></rect> 
+        <rect class="remote-btn" title="prof5" x="126" y="236" width="89" height="54"></rect> 
+        <rect class="remote-btn" title="prof6" x="238" y="235" width="89" height="55"></rect> 
+        <rect class="remote-btn" title="prof7" x="14" y="307" width="88" height="53"></rect> 
+        <rect class="remote-btn" title="prof8" x="126" y="306" width="89" height="54"></rect> 
+        <rect class="remote-btn" title="prof9" x="238" y="307" width="89" height="52"></rect> 
+        <rect class="remote-btn" title="prof10" x="15" y="378" width="87" height="52"></rect> 
+        <rect class="remote-btn" title="prof11" x="126" y="378" width="89" height="52"></rect> 
+        <rect class="remote-btn" title="prof12" x="238" y="378" width="89" height="52"></rect> 
+
+        <!-- MENU, back, up, right, down, left -->
+        <path class="remote-btn" title="menu" d="M20,538 L20,473 L29,465 L93,464 L93,493 L77,502 L64,518 L50,536 Z"></path> 
+        <path class="remote-btn" title="back" d="M247,492 L246,463 L308,464 L317,467 L321,476 L320,536 L291,539 L282,524 L272,515 L259,501 Z"></path> 
+        <path class="remote-btn" title="up" d="M85,518 L119,495 L166,485 L199,490 L228,499 L256,518 L237,539 L209,567 L190,559 L171,554 L148,560 L132,567 Z"></path> 
+        <path class="remote-btn" title="right" d="M242,554 L268,531 L293,570 L300,615 L294,658 L268,700 L219,653 L229,633 L231,602 L219,578 Z"></path> 
+        <path class="remote-btn" title="down" d="M132,663 L154,674 L183,675 L208,661 L230,684 L256,712 L233,727 L205,739 L170,744 L129,737 L104,727 L85,709 Z"></path> 
+        <path class="remote-btn" title="left" d="M123,577 L113,595 L110,617 L113,634 L122,652 L76,701 L60,684 L47,661 L41,631 L41,595 L49,567 L63,540 L75,528 Z"></path> 
+
+        <!-- DIAG, stat -->
+        <path class="remote-btn" title="diag" d="M50,691 L61,706 L79,725 L94,736 L95,766 L28,766 L21,760 L18,748 L20,692 Z"></path> 
+        <path class="remote-btn" title="stat" d="M247,735 L266,722 L279,707 L291,692 L321,691 L322,753 L317,761 L311,765 L247,766 Z"></path> 
+
+        <!-- GAIN, genlock, phase, buffer -->
+        <rect class="remote-btn" title="gain" x="20" y="800" width="83" height="83"></rect> 
+        <rect class="remote-btn" title="genlock" x="238" y="799" width="84" height="82"></rect> 
+        <rect class="remote-btn" title="phase" x="18" y="905" width="85" height="82"></rect> 
+        <rect class="remote-btn" title="buffer" x="238" y="905" width="84" height="82"></rect> 
+
+        <!-- res4k, res1080p, res1440p, res480p -->
+        <rect class="remote-btn" title="res4k" x="13" y="1020" width="65" height="42"></rect> 
+        <rect class="remote-btn" title="res1080p" x="96" y="1020" width="65" height="42"></rect> 
+        <rect class="remote-btn" title="res1440p" x="179" y="1020" width="66" height="42"></rect> 
+        <rect class="remote-btn" title="res480p" x="262" y="1020" width="66" height="42"></rect> 
+
+        <!-- res1, res2, res3, res4 -->
+        <rect class="remote-btn" title="res1" x="13" y="1091" width="65" height="41"></rect> 
+        <rect class="remote-btn" title="res2" x="96" y="1091" width="65" height="42"></rect> 
+        <rect class="remote-btn" title="res3" x="179" y="1091" width="66" height="42"></rect> 
+        <rect class="remote-btn" title="res4" x="263" y="1091" width="65" height="42"></rect> 
+
+        <!-- aux1, aux2, aux3, aux4, aux5, aux6, aux7, aux8 -->
+        <rect class="remote-btn" title="aux1" x="14" y="1232" width="65" height="42"></rect> 
+        <rect class="remote-btn" title="aux2" x="96" y="1232" width="65" height="42"></rect> 
+        <rect class="remote-btn" title="aux3" x="180" y="1232" width="64" height="42"></rect> 
+        <rect class="remote-btn" title="aux4" x="263" y="1232" width="64" height="42"></rect> 
+        <rect class="remote-btn" title="aux5" x="14" y="1303" width="65" height="42"></rect> 
+        <rect class="remote-btn" title="aux6" x="96" y="1302" width="65" height="43"></rect> 
+        <rect class="remote-btn" title="aux7" x="179" y="1302" width="66" height="43"></rect> 
+        <rect class="remote-btn" title="aux8" x="262" y="1301" width="65" height="45"></rect> 
+
+        <!-- ok, pause, safe -->
+        <circle class="remote-btn" title="ok" cx="171" cy="615" r="45"></circle>
+        <rect class="remote-btn" title="pause" x="134" y="810" width="72" height="71"></rect> 
+        <rect class="remote-btn" title="safe" x="133" y="903" width="74" height="75"></rect> 
+
+    </svg>
+
+    
+    <div class="spacer"></div>
+    <div class="footer">
+      <a href="/connections">| Control Panel |</a>
+      <div class="credits">
+        TinkLink v1.0 by Old Kid.<br>
+        PCB Design by Jeff Chen. RetroTINK by Mike Chi.
+      </div>
+    </div>
+  </body>
+ </html>

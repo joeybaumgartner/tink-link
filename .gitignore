@@ -1,0 +1,8 @@
+/microdot/*
+__pycache__/
+static/.DS_Store
+.DS_Store
+.vscode/launch.json
+launch.json
+/.venv
+/.vscode
