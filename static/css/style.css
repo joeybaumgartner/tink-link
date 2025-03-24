@@ -1,0 +1,176 @@
+/* Overall body styling */
+body {
+  margin: 0;
+  padding: 0;
+  background-color: #2F3136; /* background from old snippet */
+  font-family: system-ui, monospace;
+  color: white; /* default text color */
+}
+
+/* Ensure full height and flex layout for the entire page */
+html, body {
+  height: 100%;
+  margin: 0;
+  padding: 0;
+}
+
+body {
+  display: flex;
+  flex-direction: column;
+}
+
+/* Main content container */
+.content {
+  width: 90vw;
+  margin: 0 auto;
+  padding: 0.5rem;
+  flex: 1;
+}
+
+/* Centered elements */
+.centered {
+  display: block;
+  margin: 0 auto;
+}
+
+/* Link color */
+a {
+  color: #6F85D2;
+}
+
+/* Simple utility spacer */
+.spacer {
+  height: 5vh;
+}
+
+/* Header box styling */
+.header-box {
+  width: 90vw;
+  margin: 0 auto;
+  border: 2px dotted #737373; /* dotted grey border */
+  text-align: center;
+  padding: 0.5rem 0;
+  box-sizing: border-box;
+  background-color: #2F3136;
+}
+
+.header-box h1 {
+  color: #6F85D2;
+  margin: 0;
+  font-size: 1.2em;
+}
+
+/* Info sections */
+.info-section {
+  margin-bottom: 1rem;
+}
+.info-section:first-of-type {
+  margin-top: 0;
+}
+
+/* Headings: h2, h3 in bright green (#2EC057) */
+h2, h3 {
+  color: #2EC057;
+}
+
+/* Slight margin for h3 */
+h3 {
+  margin-bottom: 0.5rem;
+}
+
+/* Div spacing for info text */
+.info-section div {
+  line-height: 1.4;
+}
+
+/* Form sections */
+.form-section {
+  margin-top: 1rem;
+}
+
+/* Label & form fields */
+label {
+  display: block;
+  margin: 0.5rem 0 0.2rem;
+}
+
+select, input[type="password"] {
+  width: 100%;
+  padding: 0.5rem;
+  margin-bottom: 1rem;
+  box-sizing: border-box;
+}
+
+/* Buttons styling */
+button {
+  padding: 0.5rem 1rem;
+  background-color: #2F3136;
+  border: 2px dotted #737373;
+  color: white;
+  cursor: pointer;
+}
+
+button:hover {
+  background-color: #212121;
+}
+
+/* Footer styling */
+.footer {
+  width: 90vw;
+  margin: 0 auto 1.25vh;
+  border: 2px dotted #737373;
+  text-align: center;
+  padding: 0.5rem 0;
+  box-sizing: border-box;
+  margin-top: auto; /* pushes footer to the bottom */
+}
+
+/* Footer credits text style */
+.footer .credits {
+  font-weight: normal;
+  font-size: 0.7em;
+  margin-top: 0.3rem;
+  color: white;
+}
+
+/* Button group container */
+.button-group {
+  margin-top: 10px;
+  display: flex;
+  gap: 10px;
+  flex-wrap: wrap;
+  align-items: center;
+}
+
+/* In .button-group forms can be inline */
+.button-group form {
+  display: inline-block;
+}
+
+/* Hide line breaks within .button-group if needed */
+.button-group br {
+  display: none;
+}
+
+/* Footer navigation styling */
+.pipe {
+  color: white;
+  margin: 0 3px;
+}
+
+.dash {
+  color: white;
+  margin: 0 5px;
+}
+
+/* Link classes for footer navigation */
+.active {
+  color: white;
+  text-decoration: none;
+  cursor: default;
+}
+
+.inactive {
+  color: #6F85D2;
+  text-decoration: underline;
+}

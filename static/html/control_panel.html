@@ -1,0 +1,117 @@
+<!DOCTYPE html>
+<html>
+  <head>
+    <meta charset="UTF-8">
+    <meta http-equiv="Cache-Control" content="no-cache, no-store, must-revalidate">
+    <meta http-equiv="Pragma" content="no-cache">
+    <meta http-equiv="Expires" content="0">
+    <meta name="viewport" content="width=device-width, initial-scale=1, maximum-scale=2">
+    <title>|TinkLink Control Panel|</title>
+    <link rel="stylesheet" href="/static/css/style.css">
+    <script>
+      document.addEventListener("DOMContentLoaded", function() {
+        const forms = document.querySelectorAll("form");
+        forms.forEach(form => {
+          form.addEventListener("submit", function(e) {
+            e.preventDefault();
+            const button = this.querySelector("button");
+            if (button) {
+              button.style.backgroundColor = "#6F85D2";
+            }
+            setTimeout(() => { this.submit(); }, 500);
+          });
+        });
+      });
+    </script>
+  </head>
+  <body oncontextmenu="return false;">
+    <!-- Header -->
+    <div class="header-box">
+      <h1>Control Panel</h1>
+    </div>
+    
+    <!-- Main Content -->
+    <div class="content">
+      <!-- Hotspot Section -->
+      <div class="info-section" id="hotspot-info">
+        <h3>Hotspot</h3>
+        <div>
+          Hotspot SSID: {{SSID}}<br>
+          Domain Name: {{DOMAIN}}<br>
+          IP Address: {{IP}}<br>
+          Hotspot Mode: {{HOTSPOT_MODE}}
+        </div>
+        <div class="button-group">
+          <form method="POST" action="/set_hotspot_mode">
+            <input type="hidden" name="mode" value="5-minute_time_out">
+            <button type="submit">5-Minute Time-Out</button>
+          </form>
+          <form method="POST" action="/set_hotspot_mode">
+            <input type="hidden" name="mode" value="always_on">
+            <button type="submit">Always On</button>
+          </form>
+        </div>
+      </div>
+  
+      <!-- Connected Network Section -->
+      <div class="info-section" id="sta-info">
+        <h3>Connected Network</h3>
+        <div>
+          STA Status: {{STA_STATUS}}<br>
+          Connected SSID: {{STA_SSID}}<br>
+          IP Address: {{STA_IP}}
+        </div>
+        <div class="button-group">
+          {{DISCONNECT_BUTTON}}
+        </div>
+      </div>
+  
+      <!-- Saved Connection Section -->
+      <div class="info-section" id="saved-connection-info">
+        <h3>Saved Connection</h3>
+        <div>
+          {{SAVED_CONNECTION}}
+        </div>
+        <div class="button-group">
+          {{SAVED_CONNECTION_BUTTON}}
+        </div>
+      </div>
+  
+      <!-- Connect Form Section -->
+      <div class="form-section">
+        <h3>Connect to a Network</h3>
+        <form method="POST" action="/scan_networks">
+          <button type="submit">Scan for Networks</button>
+        </form>
+        <form id="home-network-form" method="POST" action="/connect">
+          <label for="network-select">Available Networks:</label>
+          <select id="network-select" name="network">
+            {{NETWORK_OPTIONS}}
+          </select>
+          <label for="network-password">Password:</label>
+          <input type="password" id="network-password" name="password" placeholder="Enter password">
+          <button type="submit">Connect</button>
+        </form>
+      </div>
+    </div>
+    
+    <!-- Footer -->
+    <div class="footer">
+      <a href="/remote-page" class="inactive">
+        <span class="pipe">|</span> Remote <span class="pipe">|</span>
+      </a>
+      <span class="dash"> - </span>
+      <a href="/terminal" class="inactive">
+        <span class="pipe">|</span> Terminal <span class="pipe">|</span>
+      </a>
+      <span class="dash"> - </span>
+      <a href="/control-panel" class="active">
+        <span class="pipe">|</span> Control Panel <span class="pipe">|</span>
+      </a>
+      <div class="credits">
+        TinkLink v1.0 by Old Kid.<br>
+        PCB Design by Jeff Chen. RetroTINK by Mike Chi.
+      </div>
+    </div>
+  </body>
+</html>

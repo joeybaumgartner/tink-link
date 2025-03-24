@@ -1,0 +1,25 @@
+<!DOCTYPE html>
+<html>
+  <head>
+    <meta charset="UTF-8">
+    <!-- Same viewport as your control panel -->
+    <meta name="viewport" content="width=device-width, initial-scale=1, maximum-scale=2">
+    <title>TinkLink Status</title>
+    <!-- Link to your shared style.css -->
+    <link rel="stylesheet" href="/static/css/style.css">
+  </head>
+  <body>
+    <!-- Container for the status message -->
+    <div class="content">
+      <h3>Status</h3>
+      <p>{{MESSAGE}}</p>
+      <p>Redirecting...</p>
+    </div>
+    <!-- Embedded JavaScript for a 4-second redirect -->
+    <script>
+      setTimeout(function(){
+        window.location.href = '/control-panel';
+      }, 4000);
+    </script>
+  </body>
+</html>
