@@ -105,7 +105,7 @@ async def ws_terminal(request, ws):
         print("Terminal WebSocket client removed")
 
 # Control panel page with dynamic content
-@app.route('/control-panel')
+@app.get('/control-panel')
 async def control_panel(request):
     try:
         with open('/control_panel.html', 'r') as f:
@@ -198,7 +198,7 @@ async def control_panel(request):
         return Response("control_panel.html not found", status_code=404)
 
 # Endpoint to scan WiFi networks
-@app.route('/scan_networks', methods=['POST'])
+@app.post('/scan_networks')
 async def scan_networks(request):
     print("[DEBUG] /scan_networks called. Scanning WiFi networks...")
     template = load_status_template()
@@ -211,7 +211,7 @@ async def scan_networks(request):
     return Response(html, headers={'Content-Type': 'text/html'})
 
 # Set hotspot mode status response
-@app.route('/set_hotspot_mode', methods=['POST'])
+@app.post('/set_hotspot_mode')
 async def set_hotspot_mode(request):
     mode = request.form.get('mode')
     if mode not in ["5-minute_time_out", "always_on"]:
@@ -233,7 +233,7 @@ async def set_hotspot_mode(request):
     return Response(html, headers={'Content-Type': 'text/html'})
 
 # Connect to a network
-@app.route('/connect', methods=['POST'])
+@app.post('/connect')
 async def connect_home_network(request):
     global last_valid_password
     ssid = request.form.get('network')
@@ -319,7 +319,7 @@ async def connect_home_network(request):
     return Response(html, headers={'Content-Type': 'text/html'})
 
 # Disconnect from a network
-@app.route('/disconnect', methods=['POST'])
+@app.post('/disconnect')
 async def disconnect_home_network(request):
     sta = network.WLAN(network.STA_IF)
     if sta.isconnected():
@@ -337,7 +337,7 @@ async def disconnect_home_network(request):
     return Response(html, headers={'Content-Type': 'text/html'})
 
 # Save connection details
-@app.route('/save_connection', methods=['POST'])
+@app.post('/save_connection')
 async def save_connection(request):
     network_name = request.form.get('network')
     password = request.form.get('password')
@@ -357,7 +357,7 @@ async def save_connection(request):
     return Response(html, headers={'Content-Type': 'text/html'})
 
 # Delete saved connection details
-@app.route('/delete_connection', methods=['POST'])
+@app.post('/delete_connection')
 async def delete_connection(request):
     try:
         os.remove("saved_connection.txt")
