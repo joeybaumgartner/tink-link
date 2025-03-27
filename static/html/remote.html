@@ -5,14 +5,14 @@
     <meta name="viewport" content="width=device-width, initial-scale=1, maximum-scale=2">
     <title>|TinkLink Remote|</title>
     <link rel="stylesheet" href="/static/css/style.css">
-    <script src="/remote.js"></script>
+    <script src="/static/js/remote.js"></script>
   </head>
   <body oncontextmenu="return false;">
     <!-- Top spacer -->
     <div class="spacer"></div>
 
     <svg version="1.1" xmlns="http://www.w3.org/2000/svg" xmlns:xlink="http://www.w3.org/1999/xlink" viewBox="0 0 341 1544">
-      <image width="341" height="1544" xlink:href="/static/images/small-remote.png"></image>
+      <image width="341" height="1544" xlink:href="/static/images/small-remote.jpg"></image>
 
         <!-- Row 1: pwr, input, output, scaler -->
         <rect class="remote-btn" title="pwr" x="14" y="47" width="88" height="87"></rect> 
@@ -88,12 +88,8 @@
 
     
     <div class="spacer"></div>
-    <div class="footer">
-      <a href="/connections">| Control Panel |</a>
-      <div class="credits">
-        TinkLink v1.0 by Old Kid.<br>
-        PCB Design by Jeff Chen. RetroTINK by Mike Chi.
-      </div>
-    </div>
+    
+    {% include 'footer.html' %}
+
   </body>
  </html>

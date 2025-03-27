@@ -174,3 +174,8 @@ button:hover {
   color: #6F85D2;
   text-decoration: underline;
 }
+
+.remote-btn {
+  fill: #fff;
+  opacity: 0%;
+}

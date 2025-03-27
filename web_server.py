@@ -1,5 +1,7 @@
+import json
 from microdot import Microdot, Response, send_file #Microdot handles web service
 from microdot.websocket import with_websocket #websocket Microdot extension
+from microdot.utemplate import Template
 import uasyncio as asyncio #allows aynchronous task handling
 import uart_async #async uart tx and rx and machine pin config
 import hotspot_control
@@ -9,10 +11,13 @@ import os
 
 app = Microdot()
 
+Response.default_content_type = 'text/html'
+Template.initialize('static/html')
+
 def load_status_template():
     """Load the status response template."""
     try:
-        with open("status_response.html", "r") as f:
+        with open("/static/html/status_response.html", "r") as f:
             return f.read()
     except OSError:
         return None
@@ -22,12 +27,27 @@ async def index(request):
     return Response(status_code=302, headers={'Location': '/remote-page'})
 
 # Handler for all static content (CSS, JS, HTML, images, etc.)
+# Images are handled in 1K chunks
 @app.route('/static/<path:path>')
 async def static(request, path):
     if '..' in path:
         # directory traversal is not allowed
         return 'Not found', 404
-    return send_file('static/' + path, max_age=1)
+    if(path == "images"):
+        try:
+            def file_iterator():
+                with open(path, 'rb') as f:
+                    while True:
+                        chunk = f.read(1024)
+                        if not chunk:
+                            break
+                        yield chunk
+
+            return Response(file_iterator(), headers={'Content-Type': 'image/png'})
+        except OSError:
+            return Response(f"{path} not found", status_code=404)
+    else:
+        return send_file('static/' + path, max_age=1)
 
 @app.route('/generate_204')
 async def generate_204(request):
@@ -39,7 +59,7 @@ async def ncsi_txt(request):
 
 @app.route('/hotspot-detect.html')
 async def hotspot_detect(request):
-    return Response('', status_code=302, headers={'Location': 'http://10.0.0.1/'})
+    return Response("<html><body>Redirecting</body></html>", status_code=302, headers={'Location': '/control-panel'})
 
 @app.route('/library/test/success.html')
 async def apple_success(request):
@@ -77,11 +97,11 @@ async def ws_endpoint(request, ws):
 
 @app.get('/remote-page')
 async def remote_page(request):
-    return send_file('static/html/remote.html')
+    return Template('remote.html').render()
 
 @app.get('/terminal')
 async def terminal_page(request):
-    return send_file('static/html/terminal.html')
+    return Template('terminal.html').render()
 
 # Terminal WebSocket endpoint for serial commands (no "remote" prefix)
 @app.route('/ws_terminal')
@@ -104,111 +124,61 @@ async def ws_terminal(request, ws):
         uart_async.chat_clients_websocket.discard(ws)
         print("Terminal WebSocket client removed")
 
-# Control panel page with dynamic content
-@app.get('/control-panel')
+# Control panel page with dynamic content; now using Template
+@app.get('control-panel')
 async def control_panel(request):
     try:
-        with open('/control_panel.html', 'r') as f:
-            html = f.read()
         wifi_info = await information.get_wifi_info()
         available = wifi_info.get('available_networks', [])
-        options_list = [f'<option value="{ssid}">{ssid}</option>' for ssid in available]
-        if not options_list:
-            options_list = ['<option value="">Please press "Scan For Networks" to populate this list.</option>']
-        options = "\n".join(options_list)
-        hotspot_mode_value = hotspot_control.get_hotspot_mode()
-        html = html.replace('{{NETWORK_OPTIONS}}', options)
-        html = html.replace('{{SSID}}', wifi_info.get('ssid', 'Unknown'))
-        html = html.replace('{{DOMAIN}}', 'tinklink.local')
-        html = html.replace('{{IP}}', wifi_info.get('ip', '0.0.0.0'))
-        html = html.replace('{{HOTSPOT_MODE}}', hotspot_mode_value)
+    
+        ssid_list = [ssid for ssid in available]
+        
+        hotspot = {
+            "ssid": "None",
+            "domain": "tinklink.local",
+            "ip": wifi_info.get('ip', '0.0.0.0'),
+            "hotspot_mode": hotspot_control.get_hotspot_mode()
+        }
+
         sta_connected = wifi_info.get('sta_connected', False)
-        sta_status = "Connected" if sta_connected else "Not Connected"
-        sta_ssid = wifi_info.get('sta_ssid', 'N/A') or "N/A"
-        sta_ip = wifi_info.get('sta_ip', '0.0.0.0')
-        html = html.replace('{{STA_STATUS}}', sta_status)
-        html = html.replace('{{STA_SSID}}', sta_ssid)
-        html = html.replace('{{STA_IP}}', sta_ip)
+
+        sta_status = {
+            "connected": sta_connected,
+            "connection_status": "Connected" if sta_connected else "Not Connected",
+            "ssid": wifi_info.get('sta_ssid', 'N/A') or "N/A",
+            "ip": wifi_info.get('sta_ip', '0.0.0.0')
+        }
+
         try:
             os.stat("saved_connection.txt")
             saved_connection_exists = True
             with open("saved_connection.txt", "r") as f:
                 lines = f.read().splitlines()
             saved_ssid = lines[0] if len(lines) >= 2 else None
+            saved_password = lines[1] if len(lines) >= 2 else None
         except OSError:
             saved_connection_exists = False
             saved_ssid = None
-        saved_connection_display = f"Saved Connection: {saved_ssid}" if saved_connection_exists and saved_ssid else "Saved Connection: None"
-        html = html.replace('{{SAVED_CONNECTION}}', saved_connection_display)
-        connected_buttons = ""
-        if sta_connected:
-            connected_buttons = (
-                '<form id="disconnect-form" method="POST" action="/disconnect">'
-                '<button type="submit">Disconnect</button>'
-                '</form>'
-            )
-        html = html.replace('{{DISCONNECT_BUTTON}}', connected_buttons)
-        saved_buttons = ""
-        if sta_connected:
-            if saved_connection_exists and saved_ssid:
-                if sta_ssid == saved_ssid:
-                    saved_buttons = (
-                        '<form id="delete-connection-form" method="POST" action="/delete_connection">'
-                        '<button type="submit">Delete Saved Connection</button>'
-                        '</form>'
-                    )
-                else:
-                    saved_buttons = (
-                        '<form id="overwrite-connection-form" method="POST" action="/save_connection">'
-                        f'<input type="hidden" name="network" value="{sta_ssid}">'
-                        '<input type="hidden" name="password" value="">'
-                        '<button type="submit">Overwrite Saved Connection</button>'
-                        '</form>'
-                    )
-                    saved_buttons += (
-                        '<form id="delete-connection-form" method="POST" action="/delete_connection">'
-                        '<button type="submit">Delete Saved Connection</button>'
-                        '</form>'
-                    )
-            else:
-                global last_valid_password
-                password_field = f'<input type="hidden" name="password" value="{last_valid_password if last_valid_password else ""}">'
-                saved_buttons = (
-                    '<form id="save-connection-form" method="POST" action="/save_connection">'
-                    f'<input type="hidden" name="network" value="{sta_ssid}">'
-                    + password_field +
-                    '<button type="submit">Save Connection</button>'
-                    '</form>'
-                )
-                saved_buttons += '<br><i>Connect to network and click Save Connection to connect on boot.</i>'
-        else:
-            if saved_connection_exists:
-                saved_buttons += (
-                    '<form id="delete-connection-form" method="POST" action="/delete_connection">'
-                    '<button type="submit">Delete Saved Connection</button>'
-                    '</form>'
-                )
-            saved_buttons += '<br><i>Connect to network and click Save Connection to connect on boot.</i>'
-        html = html.replace('{{SAVED_CONNECTION_BUTTON}}', saved_buttons)
-        return Response(html, headers={
-            'Content-Type': 'text/html',
-            'Cache-Control': 'no-cache, no-store, must-revalidate'
-        })
+
+        #if not sta_connected:
+        #        global last_valid_password
+        #        saved_password = last_valid_password if last_valid_password else ""
+
+        saved = {
+            "connection_exists": saved_connection_exists,
+            "ssid": saved_ssid if saved_connection_exists and saved_ssid else "None",
+            "password": saved_password if saved_connection_exists and saved_password else ""
+        }
+
+        return Template('control_panel.html').render(hotspot=hotspot, sta_status=sta_status, saved=saved, ssid_list=ssid_list)
     except OSError:
         return Response("control_panel.html not found", status_code=404)
 
-# Endpoint to scan WiFi networks
-@app.post('/scan_networks')
-async def scan_networks(request):
-    print("[DEBUG] /scan_networks called. Scanning WiFi networks...")
-    template = load_status_template()
-    if template is None:
-        return Response("Template not found", status_code=500)
-    scanning_message = "Scanning WiFi Connections. Please Wait..."
-    html = template.replace("{{MESSAGE}}", scanning_message)
+@app.get('/scan_networks')
+async def get_networks(request):
     found_ssids = await information.do_wifi_scan()
     information.update_scanned_networks(found_ssids)
-    return Response(html, headers={'Content-Type': 'text/html'})
+    return json.dumps(found_ssids), 200, {'Content-Type': 'application/json' }
 
 # Set hotspot mode status response
 @app.post('/set_hotspot_mode')
@@ -271,6 +241,16 @@ async def connect_home_network(request):
     if sta.isconnected():
         last_valid_password = password
         message = "Connected"
+
+        # Attempt to save the connection on first connect attempt
+        try:
+            with open("saved_connection.txt", "w") as f:
+                bytes_written = f.write(f"{ssid}\n{password}")
+                print(f"[DEBUG] Wrote saved_connection.txt with a total of {bytes_written} bytes")
+        except OSError as e:
+            return Response(f"Failed to save connection (OS error): {e}", status_code=500)
+        except Exception as e:
+            return Response(f"Failed to save connection: {e}", status_code=500)
     else:
         # Attempt to fall back to the previously saved connection if available
         try:
@@ -345,7 +325,8 @@ async def save_connection(request):
         return Response("Missing network or password", status_code=400)
     try:
         with open("saved_connection.txt", "w") as f:
-            f.write(f"{network_name}\n{password}")
+            bytes_written = f.write(f"{network_name}\n{password}")
+            print(f"[DEBUG] Wrote saved_connection.txt with a total of {bytes_written}")
     except OSError as e:
         return Response(f"Failed to save connection (OS error): {e}", status_code=500)
     except Exception as e:
