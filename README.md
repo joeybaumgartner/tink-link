@@ -16,6 +16,10 @@ TinkLink is coded in MicroPython and relies on the [Microdot](https://github.com
 - _"main.py"_: Configures WIFI and starts the access point, along with the main asyncio task loop.
 - _"small-remote.png"_: A compressed PNG of the RetroTINK-4K's remote to tap on in "remote.html".
 
+### uTemplate Library
+
+For handling server-side HTML includes, this project uses [uTemplate](https://github.com/pfalcon/utemplate) which integrages with Microdot. This library can be added in Thonny under the **Tools** > **Options** menu, and searching for `uTemplate`.
+
 ### **Configuring ESP32-C3 Software**
 TinkLink requires **MicroPython** to be installed on your ESP32-C3. A good tutorial for this process using the Thonny IDE [can be found here]( https://bhave.sh/micropython-install-esp32/).
 

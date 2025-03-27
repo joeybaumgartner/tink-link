@@ -1,0 +1,77 @@
+<!DOCTYPE html>
+<html>
+  <head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1, maximum-scale=1">
+    <title>|TinkLink Serial Terminal|</title>
+    <link rel="stylesheet" href="/static/css/style.css">
+  </head>
+  <body oncontextmenu="return false;">
+    <!-- Header -->
+    <div class="header-box">
+      <h1>Serial Terminal</h1>
+    </div>
+    
+    <!-- Main Content -->
+    <div class="content">
+      <div id="terminal-output" style="width:80vw; height:50vh; border:2px solid #737373; background:#000; color:#0f0; font-family:monospace; padding:10px; overflow-y:auto; margin:20px auto;"></div>
+      <div id="input-container" style="width:80vw; display:flex; margin:0 auto;">
+        <input type="text" id="terminal-input" placeholder="Enter command here..." style="flex:1; font-family:monospace; padding:10px;">
+        <button id="send-button" style="padding:10px 20px; margin-left:5px; cursor:pointer;">Send</button>
+      </div>
+    </div>
+    
+    {% include 'footer.html' %}
+    
+    <script>
+      const terminalOutput = document.getElementById('terminal-output');
+      const terminalInput = document.getElementById('terminal-input');
+      const sendButton = document.getElementById('send-button');
+      let ws;
+  
+      function initWebSocket() {
+        ws = new WebSocket("ws://" + location.host + "/ws_terminal");
+        ws.onopen = () => {
+          appendOutput("Connected to TinkLink WebSocket Serial server.");
+        };
+        ws.onmessage = (event) => {
+          appendOutput(event.data);
+        };
+        ws.onerror = (error) => {
+          appendOutput("WebSocket error: " + error);
+        };
+        ws.onclose = () => {
+          appendOutput("WebSocket closed. Reconnecting in 2 seconds...");
+          setTimeout(initWebSocket, 2000);
+        };
+      }
+  
+      function appendOutput(message) {
+        const newLine = document.createElement("div");
+        newLine.textContent = message;
+        terminalOutput.appendChild(newLine);
+        terminalOutput.scrollTop = terminalOutput.scrollHeight;
+      }
+  
+      function sendCommand() {
+        const command = terminalInput.value.trim();
+        if (command !== "") {
+          ws.send(command + `\r\n`);
+          appendOutput("Sent: " + command);
+          terminalInput.value = "";
+        }
+      }
+  
+      sendButton.addEventListener("click", sendCommand);
+      terminalInput.addEventListener("keydown", (event) => {
+        if (event.key === "Enter") {
+          sendCommand();
+        }
+      });
+  
+      window.onload = () => {
+        initWebSocket();
+      };
+    </script>
+  </body>
+</html>

@@ -1,7 +1,8 @@
-# captive_portal.py
 import socket
 import uasyncio as asyncio
+import network
 
+# Default AP IP
 SERVER_IP = '10.0.0.1'
 
 class DNSQuery:
@@ -38,8 +39,18 @@ async def run_dns_server():
             continue
         print("Incoming DNS request...")
         dns_query = DNSQuery(data)
-        udps.sendto(dns_query.response(SERVER_IP), addr)
-        print("Replying:", dns_query.domain, "->", SERVER_IP)
+        # If the domain is 'tinklink.local.', check the STA interface:
+        if dns_query.domain.lower() == "tinklink.local.":
+            sta = network.WLAN(network.STA_IF)
+            if sta.isconnected():
+                ip = sta.ifconfig()[0]
+                print("Redirecting tinklink.local to STA IP:", ip)
+            else:
+                ip = SERVER_IP
+        else:
+            ip = SERVER_IP
+        udps.sendto(dns_query.response(ip), addr)
+        print("Replying:", dns_query.domain, "->", ip)
     udps.close()
 
 def start_dns_server_task():
