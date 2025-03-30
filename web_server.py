@@ -78,19 +78,14 @@ async def ws_endpoint(request, ws):
             if msg is None:
                 print("WebSocket connection closed by client")
                 break
-
-            if msg == "pwr":
-                # For power commands, send two messages:
-                command1 = "pwr on\r\n"
-                command2 = "remote pwr on\r\n"
-                await uart_async.broadcast_message(command1, source='websocket')
-                await uart_async.broadcast_message(command2, source='websocket')
-                print("Broadcasted special power commands:", command1, command2)
             else:
-                # For other commands, add the remote prefix and CR/LF
                 full_command = "remote " + msg + "\r\n"
                 await uart_async.broadcast_message(full_command, source='websocket')
                 print("Broadcasted command:", full_command)
+            if msg == "pwr":
+                await uart_async.broadcast_message("pwr on\r\n", source='websocket')
+                print("Broadcasted command:", "pwr on")
+                
     finally:
         uart_async.chat_clients_websocket.discard(ws)
         print("WebSocket client removed")
