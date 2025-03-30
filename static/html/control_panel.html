@@ -1,4 +1,3 @@
-{% args hotspot, sta_status, saved, ssid_list %}
 <!DOCTYPE html>
 <html>
   <head>
@@ -22,8 +21,6 @@
             setTimeout(() => { this.submit(); }, 500);
           });
         });
-
-        document.getElementById("loading-message").style.display = 'none';
       });
 
       async function populateNetworks() {
@@ -79,10 +76,10 @@
       <div class="info-section" id="hotspot-info">
         <h3>Hotspot</h3>
         <div>
-          Hotspot SSID: {{ hotspot["ssid"] }}<br>
-          Domain Name: {{ hotspot["domain"] }}<br>
-          IP Address: {{ hotspot["ip"] }}<br>
-          Hotspot Mode: {{ hotspot["hotspot_mode"] }}
+          Hotspot SSID: {{SSID}}<br>
+          Domain Name: {{DOMAIN}}<br>
+          IP Address: {{IP}}<br>
+          Hotspot Mode: {{HOTSPOT_MODE}}
         </div>
         <div class="button-group">
           <form method="POST" action="/set_hotspot_mode">
@@ -100,16 +97,12 @@
       <div class="info-section" id="sta-info">
         <h3>Connected Network</h3>
         <div>
-          STA Status: {{ sta_status["connection_status"] }}<br>
-          Connected SSID: {{ sta_status["ssid"] }}<br>
-          IP Address: {{ sta_status["ip"] }}
+          STA Status: {{STA_STATUS}}<br>
+          Connected SSID: {{STA_SSID}}<br>
+          IP Address: {{STA_IP}}
         </div>
         <div class="button-group">
-          {% if sta_status["connected"] %}
-            <form id="disconnect-form" method="POST" action="/disconnect">
-            <button type="submit">Disconnect</button>
-            </form>
-          {% endif %}
+          {{DISCONNECT_BUTTON}}
         </div>
       </div>
   
@@ -117,48 +110,10 @@
       <div class="info-section" id="saved-connection-info">
         <h3>Saved Connection</h3>
         <div>
-          Saved Connection: {{ saved["ssid"] }}
+          {{SAVED_CONNECTION}}
         </div>
         <div class="button-group">
-        {% if sta_status["connected"] %}
-          <form id="disconnect-form" method="POST" action="/disconnect">
-          <button type="submit">Disconnect</button>
-          </form>
-        {% endif %}
-
-        {% if sta_status["connected"] %}
-          {% if saved["connection_exists"] and saved["ssid"] %}
-            {% if sta_status["ssid"] == saved["ssid"] %}
-              <form id="delete-connection-form" method="POST" action="/delete_connection">
-              <button type="submit">Delete Saved Connection</button>
-              </form>
-            {% else %}
-              <form id="overwrite-connection-form" method="POST" action="/save_connection">
-              <input type="hidden" name="network" value="{{ saved["ssid"] }}">
-              <input type="hidden" name="password" value="{{ saved["password"] }}">
-              <button type="submit">Overwrite Saved Connection</button>
-              </form>
-
-              <form id="delete-connection-form" method="POST" action="/delete_connection">
-              <button type="submit">Delete Saved Connection</button>
-              </form>
-            {% endif %}
-          {% else %}
-            <form id="save-connection-form" method="POST" action="/save_connection">
-            <input type="hidden" name="network" value="{{ sta_status["ssid"] }}">
-            <input type="hidden" name="password" value="{{ saved["password"] }}">
-            <button type="submit">Save Connection</button>
-            </form>
-            <br><i>Connect to network and click Save Connection to connect on boot.</i>
-          {% endif %}
-        {% else %}
-          {% if saved["connection_exists"] %}
-            <form id="delete-connection-form" method="POST" action="/delete_connection">
-            <button type="submit">Delete Saved Connection</button>
-            </form>
-            <br><i>Connect to network and click Save Connection to connect on boot.</i>
-          {% endif %}
-        {% endif %}
+          {{SAVED_CONNECTION_BUTTON}}
         </div>
       </div>
   
@@ -173,7 +128,7 @@
         <form id="home-network-form" method="POST" action="/connect">
           <label for="network-select">Available Networks:</label>
           <select id="network-select" name="network">
-              <option value="">Please press "Scan for Networks" to populate this list.</option>
+            <option value="">Please press "Scan for Networks" to populate this list.</option>
           </select>
           <label for="network-password">Password:</label>
           <input type="password" id="network-password" name="password" placeholder="Enter password">
@@ -182,7 +137,23 @@
       </div>
     </div>
     
-    {% include 'footer.html' %}
-
+    <!-- Footer -->
+    <div class="footer">
+      <a href="/remote-page" class="inactive">
+        <span class="pipe">|</span> Remote <span class="pipe">|</span>
+      </a>
+      <span class="dash"> - </span>
+      <a href="/terminal" class="inactive">
+        <span class="pipe">|</span> Terminal <span class="pipe">|</span>
+      </a>
+      <span class="dash"> - </span>
+      <a href="/control-panel" class="active">
+        <span class="pipe">|</span> Control Panel <span class="pipe">|</span>
+      </a>
+      <div class="credits">
+        TinkLink v1.0 by Old Kid.<br>
+        PCB Design by Jeff Chen. RetroTINK by Mike Chi.
+      </div>
+    </div>
   </body>
 </html>
