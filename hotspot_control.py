@@ -4,6 +4,12 @@ import network
 # Global variable to store the countdown task.
 hotspot_countdown_task = None
 
+HOTSPOT_MODE_FILE = "hotspot_mode.txt"
+
+class HotspotModes:
+    ALWAYS_ON = "Always On"
+    TIMEOUT = "5-Minute Time-Out"
+
 def get_hotspot_mode():
     """
     Retrieve and validate the hotspot mode from file.
@@ -12,26 +18,25 @@ def get_hotspot_mode():
     If the file doesn't exist or contains an invalid value,
     it will be created/reset to "Always On".
     """
-    allowed_modes = ["Always On", "5-Minute Time-Out"]
     try:
-        with open("hotspot_mode.txt", "r") as f:
+        with open(HOTSPOT_MODE_FILE, "r") as f:
             mode = f.read().strip()
-        if mode not in allowed_modes:
-            mode = "Always On"
+        if not(mode == HotspotModes.ALWAYS_ON or mode == HotspotModes.TIMEOUT):
             print("Invalid HotSpot mode detected. Reverting to Always On.")
-            with open("hotspot_mode.txt", "w") as f:
+            mode = HotspotModes.ALWAYS_ON
+            with open(HOTSPOT_MODE_FILE, "w") as f:
                 f.write(mode)
     except OSError:
-        mode = "Always On"
-        with open("hotspot_mode.txt", "w") as f:
-            f.write(mode)
         print("No HotSpot File detected. Setting to Always On.")
+        mode = HotspotModes.ALWAYS_ON
+        with open(HOTSPOT_MODE_FILE, "w") as f:
+            f.write(mode)
     return mode
 
 async def _hotspot_countdown():
     # Wait 5 minutes (300 seconds) from the moment the countdown starts.
     await asyncio.sleep(300)
-    if get_hotspot_mode() == "5-Minute Time-Out":
+    if get_hotspot_mode() == HotspotModes.TIMEOUT:
         ap = network.WLAN(network.AP_IF)
         if ap.active():
             ap.active(False)
