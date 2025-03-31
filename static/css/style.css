@@ -19,6 +19,10 @@ body {
   flex-direction: column;
 }
 
+fieldset {
+  border: 2px dotted #737373;
+}
+
 /* Main content container */
 .content {
   width: 90vw;
@@ -70,7 +74,7 @@ a {
 
 /* Headings: h2, h3 in bright green (#2EC057) */
 h2, h3 {
-  color: #2EC057;
+  color: #6F85D2;
 }
 
 /* Slight margin for h3 */
@@ -105,8 +109,10 @@ select, input[type="password"] {
 button {
   padding: 0.5rem 1rem;
   background-color: #2F3136;
-  border: 2px dotted #737373;
-  color: white;
+  border: 1px solid #737373;
+  border-radius: 6px;
+  color: #2EC057;
+  font-weight: bold;
   cursor: pointer;
 }
 
@@ -165,8 +171,8 @@ button:hover {
 
 /* Link classes for footer navigation */
 .active {
-  color: white;
-  text-decoration: none;
+  color: #6F85D2;
+  text-decoration: underline
   cursor: default;
 }
 
