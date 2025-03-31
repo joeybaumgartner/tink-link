@@ -21,7 +21,30 @@
       </div>
     </div>
     
-    {% include 'footer.html' %}
+    <!-- Footer -->
+<div class="footer">
+  <!-- First pipe before link -->
+  <span class="pipe">|</span>
+  <a href="/remote-page" class="inactive">Remote</a>
+  <span class="pipe">|</span>
+  
+  <span class="dash">-</span>
+  
+  <span class="pipe">|</span>
+  <a href="/terminal" class="active">Terminal</a>
+  <span class="pipe">|</span>
+  
+  <span class="dash">-</span>
+  
+  <span class="pipe">|</span>
+  <a href="/control-panel" class="inactive">Control Panel</a>
+  <span class="pipe">|</span>
+  
+  <div class="credits">
+    TinkLink v1.0 by Old Kid.<br>
+    PCB Design by Jeff Chen. RetroTINK by Mike Chi.
+  </div>
+</div>
     
     <script>
       const terminalOutput = document.getElementById('terminal-output');
