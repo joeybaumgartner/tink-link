@@ -36,7 +36,6 @@ fieldset {
   display: block;
   margin: 0 auto;
 }
-
 /* Link color */
 a {
   color: #6F85D2;
@@ -172,16 +171,11 @@ button:hover {
 /* Link classes for footer navigation */
 .active {
   color: #6F85D2;
-  text-decoration: underline
+  text-decoration: underline;
   cursor: default;
 }
 
 .inactive {
   color: #6F85D2;
   text-decoration: underline;
-}
-
-.remote-btn {
-  fill: #fff;
-  opacity: 0%;
 }
