@@ -15,6 +15,11 @@ class Origin:
 
     def __repr__(self):
         return f"Origin(name={self.name!r})"
+    
+async def _g():
+    pass
+
+type_coro = type(_g())
 
 class PubSub:
     def __init__(self):
@@ -55,7 +60,7 @@ class PubSub:
             for sub in self._subscriptions[topic]:
                 sub_origin = sub["origin"]
                 if sub_origin is None or (sub_origin is not origin and sub_origin != origin):
-                    self._queue.put_nowait(sub["callback"](payload, topic, origin))
+                    self._queue.put_nowait((sub["callback"], payload, topic, origin))
         
         # Start queue processing if not already running
         if self._processing_task is None or self._processing_task.done():
@@ -65,12 +70,15 @@ class PubSub:
         """Process the queued tasks sequentially."""
         while not self._queue.empty():
             # Get the next task
-            task = await self._queue.get()  
-            # Check if it's an async function
-            if asyncio.iscoroutine(task):  
-                await task
-            else:
-                task()
+            callback, payload, topic, origin = await self._queue.get()
+            res = self._run_callback(callback,(payload, topic, origin))
+
+    def _run_callback(self, func, tup_args):
+        res = func(*tup_args)
+        # Check if it's an async function
+        if isinstance(res, type_coro):
+            res = asyncio.create_task(res)
+        return res
 
 
 # Create a shared instance of PubSub

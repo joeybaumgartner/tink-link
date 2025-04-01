@@ -20,6 +20,7 @@ async def on_message(payload: str, topic: str, origin: Origin):
 
 pubsub.subscribe(Topics.UART_MESSAGE, on_message, pubsub_tcp_origin)
 pubsub.subscribe(Topics.WS_MESSAGE, on_message, pubsub_tcp_origin)
+pubsub.subscribe(Topics.TERMINAL_MESSAGE, on_message, pubsub_tcp_origin)
 
 async def handle_serial_over_tcp(reader, writer):
     """

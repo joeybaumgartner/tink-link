@@ -2,8 +2,6 @@ from machine import Pin, UART
 import uasyncio as asyncio
 from pubsub import pubsub, PubSub, Topics, Origin
 
-# Global sets for shared chat room clients
-chat_clients_websocket = set()              # WebSocket objects
 
 pubsub_uart_origin = PubSub.create_origin("uart")
 
@@ -34,6 +32,8 @@ async def on_message(payload: str, topic: str, origin: Origin):
 
 pubsub.subscribe(Topics.WS_MESSAGE, on_message, pubsub_uart_origin)
 pubsub.subscribe(Topics.TCP_MESSAGE, on_message, pubsub_uart_origin)
+pubsub.subscribe(Topics.TERMINAL_MESSAGE, on_message, pubsub_uart_origin)
+
 
 async def uart_task():
     """

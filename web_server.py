@@ -85,6 +85,8 @@ async def on_message(payload: str, topic: str, origin: Origin):
 
 pubsub.subscribe(Topics.UART_MESSAGE, on_message, pubsub_ws_origin)
 pubsub.subscribe(Topics.TCP_MESSAGE, on_message, pubsub_ws_origin)
+pubsub.subscribe(Topics.TERMINAL_MESSAGE, on_message, pubsub_ws_origin)
+
 
 @app.route('/ws')
 @with_websocket
@@ -100,13 +102,12 @@ async def ws_endpoint(request, ws):
                 break
             else:
                 full_command = "remote " + msg + "\r\n"
+                print("Broadcasting command:", full_command)
                 pubsub.publish(Topics.WS_MESSAGE, full_command, pubsub_ws_origin)
-                print("Broadcasted command:", full_command)
             if msg == "pwr":
                 full_command = "pwr on\r\n"
+                print("Broadcasting command:", "pwr on")
                 pubsub.publish(Topics.WS_MESSAGE, full_command, pubsub_ws_origin)
-                print("Broadcasted command:", "pwr on")
-                
     finally:
         chat_clients_websocket.discard(ws)
         print("WebSocket client removed")
@@ -127,7 +128,7 @@ pubsub_terminal_origin = PubSub.create_origin("terminal")
 @with_websocket
 async def ws_terminal(request, ws):
     print("Terminal WebSocket connection established")
-    uart_async.chat_clients_websocket.add(ws)
+    chat_clients_websocket.add(ws)
     try:
         while True:
             msg = await ws.receive()
@@ -137,11 +138,14 @@ async def ws_terminal(request, ws):
                 break
             # Send command with CR+LF without the "remote" prefix
             full_command = msg + "\r\n"
+            print("Broadcasting terminal command:", full_command)
             pubsub.publish(Topics.TERMINAL_MESSAGE, full_command, pubsub_terminal_origin)
-            print("Broadcasted terminal command:", full_command)
+            
     finally:
         chat_clients_websocket.discard(ws)
         print("Terminal WebSocket client removed")
+
+
 
 # Control panel page with dynamic content; now using Template
 @app.get('/control-panel-broken')
