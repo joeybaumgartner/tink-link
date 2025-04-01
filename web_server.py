@@ -7,7 +7,7 @@ import hotspot_control
 import information
 import network
 import os
-from pubsub import pubsub, PubSub, Topics
+from pubsub import pubsub, PubSub, Topics, Origin
 
 app = Microdot()
 
