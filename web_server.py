@@ -7,6 +7,7 @@ import hotspot_control
 import information
 import network
 import os
+from pubsub import pubsub, PubSub, Topics
 
 app = Microdot()
 
@@ -61,12 +62,35 @@ async def hotspot_detect(request):
 async def apple_success(request):
     return Response('', status_code=302, headers={'Location': 'http://10.0.0.1/'})
 
+
+
+
+
 # WebSocket endpoint with added debug prints for remote commands
+
+pubsub_ws_origin = PubSub.create_origin("ws")
+# Global sets for shared chat room clients
+chat_clients_websocket = set()              # WebSocket objects
+
+async def on_message(payload: str, topic: str, origin: Origin):
+    # Send to WebSocket clients:
+    for ws in list(chat_clients_websocket):
+        try:
+            await ws.send(payload)
+            #recipients.append("WebSocket")
+        except Exception as e:
+            print("Error broadcasting to WebSocket client:", e)
+    clean_message = payload.strip()
+    print(f"tx: {origin.name}: [{clean_message}]. rx: {pubsub_ws_origin.name}")
+
+pubsub.subscribe(Topics.UART_MESSAGE, on_message, pubsub_ws_origin)
+pubsub.subscribe(Topics.TCP_MESSAGE, on_message, pubsub_ws_origin)
+
 @app.route('/ws')
 @with_websocket
 async def ws_endpoint(request, ws):
     print("WebSocket connection established")
-    uart_async.chat_clients_websocket.add(ws)
+    chat_clients_websocket.add(ws)
 
     try:
         while True:
@@ -76,10 +100,11 @@ async def ws_endpoint(request, ws):
                 break
             else:
                 full_command = "remote " + msg + "\r\n"
-                await uart_async.broadcast_message(full_command, source='websocket')
+                pubsub.publish(Topics.WS_MESSAGE, full_command, pubsub_ws_origin)
                 print("Broadcasted command:", full_command)
             if msg == "pwr":
-                await uart_async.broadcast_message("pwr on\r\n", source='websocket')
+                full_command = "pwr on\r\n"
+                pubsub.publish(Topics.WS_MESSAGE, full_command, pubsub_ws_origin)
                 print("Broadcasted command:", "pwr on")
                 
     finally:
