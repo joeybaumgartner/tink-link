@@ -22,23 +22,29 @@
     </div>
     
     <!-- Footer -->
-    <div class="footer">
-      <a href="/remote-page" class="active">
-        <span class="pipe">|</span> Remote <span class="pipe">|</span>
-      </a>
-      <span class="dash"> - </span>
-      <a href="/terminal" class="active">
-        <span class="pipe">|</span> Terminal <span class="pipe">|</span>
-      </a>
-      <span class="dash"> - </span>
-      <a href="/control-panel" class="active">
-        <span class="pipe">|</span> Control Panel <span class="pipe">|</span>
-      </a>
-      <div class="credits">
-        TinkLink v1.0 by Old Kid.<br>
-        PCB Design by Jeff Chen. RetroTINK by Mike Chi.
-      </div>
-    </div>
+<div class="footer">
+  <!-- First pipe before link -->
+  <span class="pipe">|</span>
+  <a href="/remote-page" class="inactive">Remote</a>
+  <span class="pipe">|</span>
+  
+  <span class="dash">-</span>
+  
+  <span class="pipe">|</span>
+  <a href="/terminal" class="active">Terminal</a>
+  <span class="pipe">|</span>
+  
+  <span class="dash">-</span>
+  
+  <span class="pipe">|</span>
+  <a href="/control-panel" class="inactive">Control Panel</a>
+  <span class="pipe">|</span>
+  
+  <div class="credits">
+    TinkLink v1.0 by Old Kid.<br>
+    PCB Design by Jeff Chen. RetroTINK by Mike Chi.
+  </div>
+</div>
     
     <script>
       const terminalOutput = document.getElementById('terminal-output');

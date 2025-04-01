@@ -21,6 +21,7 @@
             setTimeout(() => { this.submit(); }, 500);
           });
         });
+      document.getElementById("loading-message").style.display = 'none';
       });
 
       async function populateNetworks() {
@@ -74,7 +75,8 @@
     <div class="content">
       <!-- Hotspot Section -->
       <div class="info-section" id="hotspot-info">
-        <h3>Hotspot</h3>
+      <fieldset>
+      <legend><h3>Hotspot</h3></legend>
         <div>
           Hotspot SSID: {{SSID}}<br>
           Domain Name: {{DOMAIN}}<br>
@@ -91,11 +93,13 @@
             <button type="submit">Always On</button>
           </form>
         </div>
+        </fieldset>
       </div>
   
       <!-- Connected Network Section -->
       <div class="info-section" id="sta-info">
-        <h3>Connected Network</h3>
+      <fieldset>
+        <legend><h3>Connected Network</h3></legend>
         <div>
           STA Status: {{STA_STATUS}}<br>
           Connected SSID: {{STA_SSID}}<br>
@@ -105,10 +109,12 @@
           {{DISCONNECT_BUTTON}}
         </div>
       </div>
+      </fieldset>
   
       <!-- Saved Connection Section -->
       <div class="info-section" id="saved-connection-info">
-        <h3>Saved Connection</h3>
+      <fieldset>
+        <legend><h3>Saved Connection</h3></legend>
         <div>
           {{SAVED_CONNECTION}}
         </div>
@@ -116,10 +122,12 @@
           {{SAVED_CONNECTION_BUTTON}}
         </div>
       </div>
+      </fieldset>
   
       <!-- Connect Form Section -->
       <div class="form-section">
-        <h3>Connect to a Network</h3>
+      <fieldset>
+      <legend><h3>Connect to a Network</h3></legend>
 
         <p id="loading-message">Loading available networks, please wait...</p>
 
@@ -136,24 +144,33 @@
         </form>
       </div>
     </div>
+    </fieldset>
     
     <!-- Footer -->
-    <div class="footer">
-      <a href="/remote-page" class="inactive">
-        <span class="pipe">|</span> Remote <span class="pipe">|</span>
-      </a>
-      <span class="dash"> - </span>
-      <a href="/terminal" class="inactive">
-        <span class="pipe">|</span> Terminal <span class="pipe">|</span>
-      </a>
-      <span class="dash"> - </span>
-      <a href="/control-panel" class="active">
-        <span class="pipe">|</span> Control Panel <span class="pipe">|</span>
-      </a>
-      <div class="credits">
-        TinkLink v1.0 by Old Kid.<br>
-        PCB Design by Jeff Chen. RetroTINK by Mike Chi.
-      </div>
+<div class="footer">
+  <!-- First pipe before link -->
+  <span class="pipe">|</span>
+  <a href="/remote-page" class="inactive">Remote</a>
+  <span class="pipe">|</span>
+  
+  <span class="dash">-</span>
+  
+  <span class="pipe">|</span>
+  <a href="/terminal" class="inactive">Terminal</a>
+  <span class="pipe">|</span>
+  
+  <span class="dash">-</span>
+  
+  <span class="pipe">|</span>
+  <a href="/control-panel" class="active">Control Panel</a>
+  <span class="pipe">|</span>
+  
+  <div class="credits">
+    TinkLink v1.0 by Old Kid.<br>
+    PCB Design by Jeff Chen. RetroTINK by Mike Chi.
+  </div>
+</div>
+
     </div>
   </body>
 </html>

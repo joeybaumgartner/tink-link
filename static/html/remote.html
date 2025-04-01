@@ -4,7 +4,7 @@
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1, maximum-scale=2">
     <title>|TinkLink Remote|</title>
-    <link rel="stylesheet" href="/static/css/style.css">
+    <link rel="stylesheet" href="/static/css/remote.css">
     <script src="/static/js/remote.js"></script>
   </head>
   <body oncontextmenu="return false;">
@@ -90,23 +90,29 @@
     <div class="spacer"></div>
     
     <!-- Footer -->
-    <div class="footer">
-      <a href="/remote-page" class="active">
-        <span class="pipe">|</span> Remote <span class="pipe">|</span>
-      </a>
-      <span class="dash"> - </span>
-      <a href="/terminal" class="active">
-        <span class="pipe">|</span> Terminal <span class="pipe">|</span>
-      </a>
-      <span class="dash"> - </span>
-      <a href="/control-panel" class="active">
-        <span class="pipe">|</span> Control Panel <span class="pipe">|</span>
-      </a>
-      <div class="credits">
-        TinkLink v1.0 by Old Kid.<br>
-        PCB Design by Jeff Chen. RetroTINK by Mike Chi.
-      </div>
-    </div>
+<div class="footer">
+  <!-- First pipe before link -->
+  <span class="pipe">|</span>
+  <a href="/remote-page" class="active">Remote</a>
+  <span class="pipe">|</span>
+  
+  <span class="dash">-</span>
+  
+  <span class="pipe">|</span>
+  <a href="/terminal" class="inactive">Terminal</a>
+  <span class="pipe">|</span>
+  
+  <span class="dash">-</span>
+  
+  <span class="pipe">|</span>
+  <a href="/control-panel" class="inactive">Control Panel</a>
+  <span class="pipe">|</span>
+  
+  <div class="credits">
+    TinkLink v1.0 by Old Kid.<br>
+    PCB Design by Jeff Chen. RetroTINK by Mike Chi.
+  </div>
+</div>
 
   </body>
  </html>

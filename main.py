@@ -13,6 +13,8 @@ SERVER_SSID = 'TinkLink-Hotspot'
 SERVER_IP = '10.0.0.1'
 SERVER_SUBNET = '255.255.255.0'
 
+SAVED_CONNECTION_FILE = "saved_connection.txt"
+
 def wifi_start_access_point():
     wifi = network.WLAN(network.AP_IF)
     wifi.ifconfig((SERVER_IP, SERVER_SUBNET, SERVER_IP, SERVER_IP))
@@ -30,7 +32,7 @@ def clear_sta_settings():
 def connect_saved_network():
     """Reads saved_connection.txt and attempts to connect to that network."""
     try:
-        with open("saved_connection.txt", "r") as f:
+        with open(SAVED_CONNECTION_FILE, "r") as f:
             data = f.read()
         lines = data.splitlines()
 
@@ -70,7 +72,7 @@ async def main():
     # Check hotspot mode and start countdown if needed.
     mode = hotspot_control.get_hotspot_mode()
     print("Hotspot mode at boot:", mode)
-    if mode == "5-Minute Time-Out":
+    if mode == hotspot_control.HotspotModes.TIMEOUT:
         hotspot_control.start_countdown()
 
     # Attempt to connect to any saved network
