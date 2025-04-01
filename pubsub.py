@@ -2,9 +2,11 @@ from typing import Callable, Dict, List, Any
 import asyncio
 
 class Topics:
-    UART_MESSAGE = "/uart/message"  # payload: str
-    TCP_MESSAGE = "/tcp/message"    # payload: str
-    WS_MESSAGE = "/ws/message"      # payload: str
+    UART_MESSAGE = "/uart/message"      # payload: str
+    TCP_MESSAGE = "/tcp/message"        # payload: str
+    WS_MESSAGE = "/ws/message"          # payload: str
+    TERMINAL_MESSAGE = "/terminal/message"    # payload: str
+
 
 class Origin:
     def __init__(self, name: str = None):

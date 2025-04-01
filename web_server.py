@@ -108,7 +108,7 @@ async def ws_endpoint(request, ws):
                 print("Broadcasted command:", "pwr on")
                 
     finally:
-        uart_async.chat_clients_websocket.discard(ws)
+        chat_clients_websocket.discard(ws)
         print("WebSocket client removed")
 
 @app.get('/remote-page')
@@ -120,6 +120,9 @@ async def terminal_page(request):
     return send_file('/static/html/terminal.html')
 
 # Terminal WebSocket endpoint for serial commands (no "remote" prefix)
+
+pubsub_terminal_origin = PubSub.create_origin("terminal")
+
 @app.route('/ws_terminal')
 @with_websocket
 async def ws_terminal(request, ws):
@@ -134,10 +137,10 @@ async def ws_terminal(request, ws):
                 break
             # Send command with CR+LF without the "remote" prefix
             full_command = msg + "\r\n"
-            await uart_async.broadcast_message(full_command, source='terminal')
+            pubsub.publish(Topics.TERMINAL_MESSAGE, full_command, pubsub_terminal_origin)
             print("Broadcasted terminal command:", full_command)
     finally:
-        uart_async.chat_clients_websocket.discard(ws)
+        chat_clients_websocket.discard(ws)
         print("Terminal WebSocket client removed")
 
 # Control panel page with dynamic content; now using Template
