@@ -1,5 +1,6 @@
 from typing import Callable, Dict, List, Any
-import asyncio
+import uasyncio as asyncio
+from async_queue import AsyncQueue
 
 class Topics:
     UART_MESSAGE = "/uart/message"      # payload: str
@@ -18,7 +19,7 @@ class Origin:
 class PubSub:
     def __init__(self):
         self._subscriptions = {}
-        self._queue = asyncio.Queue()
+        self._queue = AsyncQueue()
         self._processing_task = None
 
     @classmethod
