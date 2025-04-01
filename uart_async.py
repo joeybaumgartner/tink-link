@@ -17,7 +17,8 @@ uart = UART(
     parity=None,
     stop=1,
     tx=tx_pin,
-    rx=rx_pin
+    rx=rx_pin,
+    timeout=100
 )
 
 async def on_message(payload: str, topic: str, origin: Origin):
@@ -43,7 +44,7 @@ async def uart_task():
     """
     while True:
         if uart.any() > 0:
-            data = uart.read()
+            data = uart.readline()
             if data:
                 try:
                     msg = data.decode('utf-8').strip()
