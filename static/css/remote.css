@@ -1,0 +1,43 @@
+/* Overall body styling */
+body {
+    margin: 0;
+    padding: 0;
+    background-color: #212121;
+    font-family: system-ui;
+    display: flex;
+    flex-direction: column;
+}
+
+/* Link color */
+a {
+    color: #6F85D2;
+}
+
+/* Simple utility spacer */
+.spacer {
+    height: 5vh;
+}
+
+.remote-btn {
+    fill: #fff;
+    opacity: 0%;
+}
+
+/* Footer styling */
+.footer {
+    width: 90vw;
+    margin: 0 auto 1.25vh;
+    border: 2px dotted #737373;
+    text-align: center;
+    padding: 0.5rem 0;
+    box-sizing: border-box;
+    margin-top: auto; /* pushes footer to the bottom */
+  }
+  
+  /* Footer credits text style */
+  .footer .credits {
+    font-weight: normal;
+    font-size: 0.7em;
+    margin-top: 0.3rem;
+    color: white;
+  }
