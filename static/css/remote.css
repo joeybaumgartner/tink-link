@@ -2,10 +2,28 @@
 body {
     margin: 0;
     padding: 0;
-    background-color: #212121;
+    background-color: #2F3136;
     font-family: system-ui;
     display: flex;
     flex-direction: column;
+}
+
+.pipe {
+  color: white;
+  margin: 0 3px;
+  }
+
+.dash {
+  color: white;
+  margin: 0 5px;
+}
+
+svg {
+  width: 80vw;
+  height: auto;
+  max-height: 1200px; /* adjust */
+  display: block;
+  margin: 0 auto;
 }
 
 /* Link color */
@@ -41,3 +59,14 @@ a {
     margin-top: 0.3rem;
     color: white;
   }
+  
+.active {
+  color: #6F85D2;
+  text-decoration: underline;
+  cursor: default;
+}
+
+.inactive {
+  color: #6F85D2;
+  text-decoration: underline;
+}
