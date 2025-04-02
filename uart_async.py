@@ -1,9 +1,9 @@
 from machine import Pin, UART
 import uasyncio as asyncio
+from pubsub import pubsub, PubSub, Topics, Origin
 
-# Global sets for shared chat room clients
-chat_clients_serial_over_tcp = set()      # serial_over_tcp client writer objects
-chat_clients_websocket = set()              # WebSocket objects
+
+pubsub_uart_origin = PubSub.create_origin("uart")
 
 # Configure UART TX and RX pins
 tx_pin = Pin(21, mode=Pin.OPEN_DRAIN)
@@ -17,48 +17,24 @@ uart = UART(
     parity=None,
     stop=1,
     tx=tx_pin,
-    rx=rx_pin
+    rx=rx_pin,
+    timeout=100
 )
 
-async def broadcast_message(message, source=None):
-    """
-    Broadcast the raw message to all connected endpoints and log a single summary line.
-    The message is sent to:
-      - serial_over_tcp (raw TCP) clients
-      - WebSocket clients
-      - UART (if source isn't 'uart', to avoid echo)
-    The log summarizes which endpoints received the message.
-    """
-    recipients = []
-    
-    # Send to serial_over_tcp clients:
-    for writer in list(chat_clients_serial_over_tcp):
-        try:
-            writer.write(message.encode('utf-8'))
-            await writer.drain()
-            recipients.append("raw_tcp")
-        except Exception as e:
-            print("Error broadcasting to raw_tcp client:", e)
-    
-    # Send to WebSocket clients:
-    for ws in list(chat_clients_websocket):
-        try:
-            await ws.send(message)
-            recipients.append("WebSocket")
-        except Exception as e:
-            print("Error broadcasting to WebSocket client:", e)
-    
+async def on_message(payload: str, topic: str, origin: Origin):
     # Write to UART if the message did not originate from UART (avoid echo)
-    if source != 'uart':
-        try:
-            uart.write(message.encode('utf-8'))
-            recipients.append("UART")
-        except Exception as e:
-            print("Error writing to UART:", e)
-    
-    # Log a single summary line
-    clean_message = message.strip()
-    print(f"tx: {source}: [{clean_message}]. rx: {', '.join(recipients)}")
+    # Pubsub already guarantees not to deliver messages to same origin so no check needed
+    try:
+        uart.write(payload.encode('utf-8'))
+    except Exception as e:
+        print("Error writing to UART:", e)
+    clean_message = payload.strip()
+    print(f"tx: {origin.name}: [{clean_message}]. rx: {pubsub_uart_origin.name}")
+
+pubsub.subscribe(Topics.WS_MESSAGE, on_message, pubsub_uart_origin)
+pubsub.subscribe(Topics.TCP_MESSAGE, on_message, pubsub_uart_origin)
+pubsub.subscribe(Topics.TERMINAL_MESSAGE, on_message, pubsub_uart_origin)
+
 
 async def uart_task():
     """
@@ -68,15 +44,17 @@ async def uart_task():
     """
     while True:
         if uart.any() > 0:
-            data = uart.read()
+            data = uart.readline()
             if data:
                 try:
                     msg = data.decode('utf-8').strip()
                 except Exception:
                     msg = str(data)
                 print("UART received:", msg)
+                msg = msg + "\r\n"
                 # Broadcast the raw UART message with a CR/LF appended
-                await broadcast_message(msg + "\r\n", source='uart')
+                pubsub.publish(Topics.UART_MESSAGE, msg, pubsub_uart_origin)
+                
         await asyncio.sleep_ms(50)
 
 def start_uart_task():
@@ -85,56 +63,18 @@ def start_uart_task():
     """
     asyncio.create_task(uart_task())
 
-async def handle_serial_over_tcp(reader, writer):
-    """
-    Handle a serial_over_tcp connection.
-    Read lines from the client and broadcast them unchanged.
-    (No "remote " prefix is added for serial_over_tcp messages.)
-    """
-    addr = writer.get_extra_info('peername')
-    print("serial_over_tcp client connected:", addr)
-    chat_clients_serial_over_tcp.add(writer)
-    try:
-        writer.write(b"Connected to TinkLink Serial Over TCP Terminal\r\n")
-        await writer.drain()
-        while True:
-            line = await reader.readline()
-            if not line:
-                break
-            # Process the incoming message without adding any prefix
-            msg = line.decode('utf-8').strip().replace('\t', '')
-            print("serial_over_tcp received:", msg)
-            # Broadcast the message as received with CR/LF
-            await broadcast_message(msg + "\r\n", source='serial_over_tcp')
-        print("serial_over_tcp client finished sending data:", addr)
-    except Exception as e:
-        print("serial_over_tcp error:", e)
-    finally:
-        chat_clients_serial_over_tcp.discard(writer)
-        writer.close()
-        try:
-            await writer.wait_closed()
-        except Exception:
-            pass
-        print("serial_over_tcp client disconnected:", addr)
-
-def start_serial_over_tcp_server(port=8023):
-    """
-    Start the serial_over_tcp server on the given port.
-    """
-    print("Starting serial_over_tcp server on port", port)
-    return asyncio.create_task(asyncio.start_server(handle_serial_over_tcp, '0.0.0.0', port))
 
 # Usage:
 # In your main application code, call:
 #   start_uart_task()
-#   start_serial_over_tcp_server(port=8023)
 #
-# For the WebSocket (remote) endpoint, in your web server module, import:
-#   chat_clients_websocket and broadcast_message from this module.
-# In that WebSocket endpoint, if you want to add the "remote " helper, do it there before calling broadcast_message,
+# For the remote endpoint import:
+#   from pubsub import pubsub, PubSub, Topics, Origin
+# In that endpoint, if you want to add the "remote " helper, do it there before calling broadcast_message,
 # for example:
-#    await broadcast_message("remote " + msg + "\r\n", source='web')
+#    pubsub.publish("/ws/message", "remote " + msg + "\r\n", "websocket")
+#
+# Check the doc comments on pubsub for more information on how to use
 #
 # This way, UART and serial_over_tcp messages are transmitted unmodified,
 # while the remote (web) channel can include the helper prefix as desired.

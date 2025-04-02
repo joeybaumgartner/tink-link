@@ -5,6 +5,7 @@ import uasyncio as asyncio
 import captive_portal
 import web_server
 import uart_async
+import tcp_async
 import hotspot_control
 import information
 
@@ -82,7 +83,7 @@ async def main():
     captive_portal.start_dns_server_task()
     web_server.start_web_server()
     uart_async.start_uart_task()
-    uart_async.start_serial_over_tcp_server(port=8023)
+    tcp_async.start_serial_over_tcp_server(port=8023)
 
     print("Servers running. AP:", SERVER_SSID)
     while True:
