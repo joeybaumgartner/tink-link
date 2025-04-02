@@ -48,11 +48,11 @@ async def uart_task():
             if data:
                 try:
                     msg = data.decode('utf-8').strip()
+                    # Strip removes the trailing CR/LF, add it back
+                    msg = msg + "\r\n"
                 except Exception:
                     msg = str(data)
                 print("UART received:", msg)
-                msg = msg + "\r\n"
-                # Broadcast the raw UART message with a CR/LF appended
                 pubsub.publish(Topics.UART_MESSAGE, msg, pubsub_uart_origin)
                 
         await asyncio.sleep_ms(50)
