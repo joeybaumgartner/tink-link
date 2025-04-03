@@ -19,7 +19,7 @@ async def on_message(payload: str, topic: str, origin: Origin):
     print(f"tx: {origin.name}: [{clean_message}]. rx: {pubsub_tcp_origin.name}")
 
 pubsub.subscribe(Topics.UART_MESSAGE, on_message, pubsub_tcp_origin)
-pubsub.subscribe(Topics.WS_MESSAGE, on_message, pubsub_tcp_origin)
+pubsub.subscribe(Topics.REMOTE_MESSAGE, on_message, pubsub_tcp_origin)
 pubsub.subscribe(Topics.TERMINAL_MESSAGE, on_message, pubsub_tcp_origin)
 
 async def handle_serial_over_tcp(reader, writer):

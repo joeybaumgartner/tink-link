@@ -1,7 +1,7 @@
 import uasyncio as asyncio
 from pubsub import pubsub, PubSub, Topics, Origin
 from typing import Callable, Dict, List, Any
-
+from uart_async import Uart
 
 
 class SwitcherState:
@@ -24,7 +24,7 @@ class Line:
         return self.find("E") == 0
 
     def get_error(self) -> int:
-        if(self.is_error()):
+        if self.is_error():
             return int(self.line[1:3])
         else:
             return -1 # not en error
@@ -33,7 +33,7 @@ class Line:
         return self.line.find("In") == 0 and (self.line.find("All") > 0 or self.line.find("Vid"))
 
     def get_input(self) -> int:
-        if(self.is_input()):
+        if self.is_input():
             # Designed to work for lines with one input char eg "In3 All" or with two input chars eg "In10 All"
             return int(self.line[2:4])
         else:
@@ -41,21 +41,18 @@ class Line:
 
 
 class ExtronSwVga:
-    def __init__(self):
+    def __init__(self, uart: Uart):
         self.state = SwitcherState(None, 0)
-        self.origin = PubSub.create_origin("Extron SW VGA")
+        self.pubsub_origin = PubSub.create_origin("ExtronSWVGA")
+        self.uart = uart
 
     async def _on_message(self, payload: str, topic: str, origin: Origin):
         line = Line(payload)
-        if(line.is_input):
+        if line.is_input():
             input = line.get_input()
             self.state.activeInput = input
             print("Extron state change published: ", self.state)
-            pubsub.publish(Topics.EXTRON_STATECHANGED, self.state.clone(), self.origin)
+            pubsub.publish(Topics.SWITCHER_STATECHANGED, self.state.clone(), self.pubsub_origin)
 
     def subscribe(self):
-        pubsub.subscribe(Topics.UART_MESSAGE, self._on_message, self.origin)
-
-
-# Create a shared instance of PubSub
-pubsub = PubSub()
+        pubsub.subscribe(Topics.UART_MESSAGE, self._on_message, self.pubsub_origin)
