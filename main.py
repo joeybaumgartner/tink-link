@@ -95,7 +95,7 @@ async def main():
     # Start servers/tasks
     captive_portal.start_dns_server_task()
     web_server.start_web_server()
-    uart = uart_async.Hw_Uart(0)
+    uart = uart_async.Hw_Uart(1)
     uart.start()
     extron = ExtronSwVga(uart)
     extron.subscribe()
