@@ -8,6 +8,7 @@ import uart_async
 import tcp_async
 import hotspot_control
 import information
+from extron_sw_vga import ExtronSwVga
 
 # AP configuration constants
 SERVER_SSID = 'TinkLink-Hotspot'
@@ -82,7 +83,11 @@ async def main():
     # Start servers/tasks
     captive_portal.start_dns_server_task()
     web_server.start_web_server()
-    uart_async.start_uart_task()
+    uart = uart_async.Hw_Uart(0)
+    uart.start()
+    extron = ExtronSwVga(uart)
+    extron.subscribe()
+
     tcp_async.start_serial_over_tcp_server(port=8023)
 
     print("Servers running. AP:", SERVER_SSID)

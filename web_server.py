@@ -8,6 +8,7 @@ import information
 import network
 import os
 from pubsub import pubsub, PubSub, Topics, Origin
+from extron_sw_vga import SwitcherState
 
 app = Microdot()
 
@@ -68,31 +69,30 @@ async def apple_success(request):
 
 # WebSocket endpoint with added debug prints for remote commands
 
-pubsub_ws_origin = PubSub.create_origin("ws")
-# Global sets for shared chat room clients
-chat_clients_websocket = set()              # WebSocket objects
-
-async def on_message(payload: str, topic: str, origin: Origin):
+pubsub_remote_origin = PubSub.create_origin("remote")
+remote_websockets = set()            # WebSocket objects
+async def _on_message_remote(payload: str, topic: str, origin: Origin):
     # Send to WebSocket clients:
-    for ws in list(chat_clients_websocket):
+    global remote_websockets
+    for ws in remote_websockets:
+        message = origin.name + ":" + payload
         try:
-            await ws.send(payload)
-            #recipients.append("WebSocket")
+            await ws.send(message)
+            print(f"tx: {origin.name}: [{message.strip()}]. rx: {pubsub_remote_origin.name}")
         except Exception as e:
-            print("Error broadcasting to WebSocket client:", e)
-    clean_message = payload.strip()
-    print(f"tx: {origin.name}: [{clean_message}]. rx: {pubsub_ws_origin.name}")
+            print("Error broadcasting to remote client:", e)
+    
 
-pubsub.subscribe(Topics.UART_MESSAGE, on_message, pubsub_ws_origin)
-pubsub.subscribe(Topics.TCP_MESSAGE, on_message, pubsub_ws_origin)
-pubsub.subscribe(Topics.TERMINAL_MESSAGE, on_message, pubsub_ws_origin)
-
+pubsub.subscribe(Topics.UART_MESSAGE, _on_message_remote, pubsub_remote_origin)
+pubsub.subscribe(Topics.TCP_MESSAGE, _on_message_remote, pubsub_remote_origin)
+pubsub.subscribe(Topics.TERMINAL_MESSAGE, _on_message_remote, pubsub_remote_origin)
 
 @app.route('/ws')
 @with_websocket
 async def ws_endpoint(request, ws):
     print("WebSocket connection established")
-    chat_clients_websocket.add(ws)
+    global remote_websockets
+    remote_websockets.add(ws)
 
     try:
         while True:
@@ -103,13 +103,13 @@ async def ws_endpoint(request, ws):
             else:
                 full_command = "remote " + msg + "\r\n"
                 print("Broadcasting command:", full_command)
-                pubsub.publish(Topics.WS_MESSAGE, full_command, pubsub_ws_origin)
+                pubsub.publish(Topics.REMOTE_MESSAGE, full_command, pubsub_remote_origin)
             if msg == "pwr":
                 full_command = "pwr on\r\n"
                 print("Broadcasting command:", "pwr on")
-                pubsub.publish(Topics.WS_MESSAGE, full_command, pubsub_ws_origin)
+                pubsub.publish(Topics.REMOTE_MESSAGE, full_command, pubsub_remote_origin)
     finally:
-        chat_clients_websocket.discard(ws)
+        remote_websockets.remove(ws)
         print("WebSocket client removed")
 
 @app.get('/remote-page')
@@ -123,12 +123,31 @@ async def terminal_page(request):
 # Terminal WebSocket endpoint for serial commands (no "remote" prefix)
 
 pubsub_terminal_origin = PubSub.create_origin("terminal")
+terminal_websockets = set()
+
+async def _on_message_terminal(payload: any, topic: str, origin: Origin):
+    # Send to WebSocket clients:
+    global terminal_websockets
+    for ws in terminal_websockets:
+        message = origin.name + ":" + str(payload)
+        try:
+            await ws.send(message)
+            print(f"tx: {origin.name}: [{message.strip()}]. rx: {pubsub_terminal_origin.name}")
+        except Exception as e:
+            print("Error broadcasting to terminal client:", e)
+
+pubsub.subscribe(Topics.UART_MESSAGE, _on_message_terminal, pubsub_terminal_origin)
+pubsub.subscribe(Topics.TCP_MESSAGE, _on_message_terminal, pubsub_terminal_origin)
+pubsub.subscribe(Topics.REMOTE_MESSAGE, _on_message_terminal, pubsub_terminal_origin)
+pubsub.subscribe(Topics.SWITCHER_STATECHANGED, _on_message_terminal, pubsub_terminal_origin)
+
 
 @app.route('/ws_terminal')
 @with_websocket
 async def ws_terminal(request, ws):
     print("Terminal WebSocket connection established")
-    chat_clients_websocket.add(ws)
+    global terminal_websockets
+    terminal_websockets.add(ws)
     try:
         while True:
             msg = await ws.receive()
@@ -142,7 +161,7 @@ async def ws_terminal(request, ws):
             pubsub.publish(Topics.TERMINAL_MESSAGE, full_command, pubsub_terminal_origin)
             
     finally:
-        chat_clients_websocket.discard(ws)
+        terminal_websockets.remove(ws)
         print("Terminal WebSocket client removed")
 
 
