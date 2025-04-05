@@ -1,14 +1,17 @@
 import os
 import network
 import time
+from extron_mav_crosspoint import ExtronMavCrosspoint
 import uasyncio as asyncio
 import captive_portal
 import web_server
 import uart_async
 import tcp_async
+import telnet_async
 import hotspot_control
-import information
+import information 
 from extron_sw_vga import ExtronSwVga
+import json
 
 # AP configuration constants
 SERVER_SSID = 'TinkLink-Hotspot'
@@ -67,6 +70,15 @@ def connect_saved_network():
         print("No saved connection found, clearing STA settings.")
         clear_sta_settings()
 
+def connect_to_telnet(filename: str) -> dict:
+    try:
+        with open(filename) as f:
+            config = json.load(f)
+            return config
+    except OSError:
+        print("No telnet server setup, continuing...")
+        return None
+
 async def main():
     wifi_start_access_point()
     time.sleep(1)  # Allow time for the AP to initialize
@@ -87,6 +99,15 @@ async def main():
     uart.start()
     extron = ExtronSwVga(uart)
     extron.subscribe()
+
+    config = connect_to_telnet("telnet_config.json")
+
+    if config:
+        telnet = telnet_async.TelnetConnection(config["hostname"], config["port"], config["username"], config["password"], config["init_string"])
+        telnet.start()
+
+        extroncp = ExtronMavCrosspoint(telnet)
+        extroncp.subscribe()
 
     tcp_async.start_serial_over_tcp_server(port=8023)
 
