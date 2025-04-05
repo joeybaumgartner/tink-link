@@ -1,7 +1,7 @@
 import uasyncio as asyncio
 from pubsub import pubsub, PubSub, Topics, Origin
 from typing import Callable, Dict, List, Any
-from uart_async import Uart
+from uart_async import BaseUart
 
 
 class SwitcherState:
@@ -41,9 +41,9 @@ class Line:
 
 
 class ExtronSwVga:
-    def __init__(self, uart: Uart):
+    def __init__(self, uart: BaseUart):
         self.state = SwitcherState(None, 0)
-        self.pubsub_origin = PubSub.create_origin("ExtronSWVGA")
+        self.pubsub_origin = PubSub.create_origin("ExtronSwVga")
         self.uart = uart
 
     async def _on_message(self, payload: str, topic: str, origin: Origin):
