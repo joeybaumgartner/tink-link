@@ -83,7 +83,6 @@ class HwUart(BaseUart):
         self._tmp_buf = bytearray(64)  # temp buffer for readinto
         self._line_buffer = bytearray()
         self._flag = asyncio.ThreadSafeFlag()
-        self._num_read = 0
         self._uart_task = None
         
         self.pubsub_origin = PubSub.create_origin("HwUart" + str(self.uart_id))
