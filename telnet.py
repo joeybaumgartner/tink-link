@@ -37,13 +37,13 @@ class TelnetClient:
             print("Attempting to login")
             self.writer.write(f"{self.password}\r\n".encode())
             text = await self.reader.readline()
-            print("text output: " , text.decode().strip())
+            print("text output: " , text.decode(self.encoding).strip())
 
         if self.init_string != "":
             h = bytes(f"{self.init_string}\r\n", self.encoding)
             self.writer.write(h)
             data = await self.reader.readline()
-            data = data.decode().strip()
+            data = data.decode(self.encoding).strip()
             print(f"Init response: {data}")
 
         self.initialized = True
@@ -61,12 +61,12 @@ class TelnetClient:
             await self.init()
 
         data = await self.reader.readline()
-        r = data.decode().strip()
+        r = data.decode(self.encoding).strip()
         
         return r
     
     async def write(self, message: str):
-        message = message + "\r\n"
+        message = message + "\r\n"   # <- function should be named writeline
         if self.connected:
             data = bytes(message, self.encoding)
             self.writer.write(data)

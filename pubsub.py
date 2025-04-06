@@ -8,6 +8,8 @@ class Topics:
     REMOTE_MESSAGE = "/remote/message"                  # payload: str
     TERMINAL_MESSAGE = "/terminal/message"              # payload: str
     SWITCHER_STATECHANGED = "/switcher/stateChanged"    # payload: SwitcherState
+    TELNET_MESSAGE = "/telnet/message"                  # payload: str
+
 
 
 class Origin:

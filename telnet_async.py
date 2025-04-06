@@ -38,9 +38,9 @@ class TelnetConnection:
 
     async def stop(self):
         self.run_task = False
-        pubsub.subscribe(Topics.REMOTE_MESSAGE, self._on_pubsub_message, self.pubsub_origin)
-        pubsub.subscribe(Topics.TCP_MESSAGE, self._on_pubsub_message, self.pubsub_origin)
-        pubsub.subscribe(Topics.TERMINAL_MESSAGE, self._on_pubsub_message, self.pubsub_origin)
+        pubsub.unsubscribe(Topics.REMOTE_MESSAGE, self._on_pubsub_message)
+        pubsub.unsubscribe(Topics.TCP_MESSAGE, self._on_pubsub_message)
+        pubsub.unsubscribe(Topics.TERMINAL_MESSAGE, self._on_pubsub_message)
         res = await self._telnet_task
 
     async def _read_telnet(self):
@@ -56,7 +56,7 @@ class TelnetConnection:
             except Exception as e:
                 message = f"Exception: {e}"
                 
-            pubsub.publish(Topics.UART_MESSAGE, message, self.pubsub_origin)
+            pubsub.publish(Topics.TELNET_MESSAGE, message, self.pubsub_origin)
 
             await asyncio.sleep_ms(50)
             
@@ -66,7 +66,7 @@ class TelnetConnection:
         try:
             if(payload.find(prefix) == 0):
                 message = payload[len(prefix):]
-                self.write(message)
+                self.telnetClient.write(message)
                 print(f"tx: {origin.name} [{message.strip()}. rx {self.pubsub_origin.name}]")
         except Exception as e:
             print("Error writing to telnet: ", e)
