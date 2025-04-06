@@ -51,4 +51,4 @@ class ExtronMavCrosspoint:
             pubsub.publish(Topics.SWITCHER_STATECHANGED, self.state.clone(), self.pubsub_origin)
 
     def subscribe(self):
-        pubsub.subscribe(Topics.UART_MESSAGE, self._on_message, self.pubsub_origin)
+        pubsub.subscribe(Topics.TELNET_MESSAGE, self._on_message, self.pubsub_origin)

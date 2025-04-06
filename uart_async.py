@@ -4,6 +4,7 @@ from pubsub import pubsub, PubSub, Topics, Origin
 from esp32 import RMT
 import time
 import math
+import micropython
 
 DEFAULT_BAUD = 9600
 
@@ -72,12 +73,18 @@ class BaseUart:
 
 
 
-class Hw_Uart(BaseUart):
+class HwUart(BaseUart):
 
     def __init__(self, uart_id = 1, tx_pin = 21, rx_pin = 20, encoding = 'utf-8', baud = DEFAULT_BAUD):
         super().__init__(uart_id, tx_pin, rx_pin, encoding, baud)
         self.uart = None
+
+        self._rx_buffer = micropython.RingIO(512)
+        self._tmp_buf = bytearray(64)  # temp buffer for readinto
+        self._line_buffer = bytearray()
+        self._flag = asyncio.ThreadSafeFlag()
         self._uart_task = None
+        
         self.pubsub_origin = PubSub.create_origin("HwUart" + str(self.uart_id))
 
 
@@ -85,12 +92,25 @@ class Hw_Uart(BaseUart):
         if self.uart == None:
             self.uart = UART(self.uart_id)
 
-        self.uart.init(self.baud, 8, None, 1,
-            tx = self.tx_pin,
-            rx = self.rx_pin,
-            timeout = 100
-        )
+        self.uart.init(self.baud, tx = self.tx_pin, rx = self.rx_pin)
+        self.uart.irq(trigger = UART.IRQ_RXIDLE, handler = self._irq_handler)
         super().open()
+
+
+    def _irq_handler(self, uart):
+        micropython.schedule(self._on_uart_data, 0)
+
+
+    def _on_uart_data(self, _):
+        try:
+            while True:
+                n = self.uart.readinto(self._tmp_buf)
+                if n is None or n == 0:
+                    break
+                self._rx_buffer.write(self._tmp_buf)#[:n])
+            self._flag.set()
+        except Exception as e:
+            print("IRQ error:", e)
 
 
     def close(self):
@@ -111,25 +131,27 @@ class Hw_Uart(BaseUart):
 
 
     async def _read_uart(self):
-        """
-        Continuously read data from the UART.
-        When data is received, decode and broadcast it without modification.
-        (No "remote " helper is added for UART data.)
-        """
-        while self.running:
-            if self.uart.any() > 0:
-                data = self.uart.readline()
-                if data:
-                    try:
-                        msg = data.decode(self.encoding).strip()
-                        # Strip removes the trailing CR/LF, add it back
-                        msg = msg + "\r\n"
-                    except Exception:
-                        msg = str(data)
-                    print("UART received:", msg)
-                    pubsub.publish(Topics.UART_MESSAGE, msg, self.pubsub_origin)
-                    
-            await asyncio.sleep_ms(50)
+        try:
+            while self.running:
+                await self._flag.wait()
+                while self._rx_buffer.any():
+                    bytes = self._rx_buffer.read(1)
+                    if bytes:
+                        char = bytes[0]
+                        self._line_buffer.append(char)
+                        if char == 10: # ASCII '\n'
+                            try:
+                                msg = self._line_buffer.decode(self.encoding).strip() + '\r\n'
+                                self._line_buffer = bytearray() # reset buffer
+                                print("UART received:", msg)
+                                pubsub.publish(Topics.UART_MESSAGE, msg, self.pubsub_origin)
+                            except Exception as e:
+                                print("Decode error:", e)
+                                msg = str(self._line_buffer)
+                    else:
+                        print("Unexpected empty bytes when rx_buffer.any() returned true")
+        except Exception as e:
+            print("Error in UART read loop:", e)
 
 
     def _write_impl(self, message):
@@ -139,11 +161,11 @@ class Hw_Uart(BaseUart):
 
 
     async def stop(self):
-        super().stop()
+        await super().stop()
         res = await self._uart_task
 
 
-class Rmt_Uart(BaseUart):
+class RmtUart(BaseUart):
 
     def __init__(self, uart_id = 0, tx_pin = 21, rx_pin = 20, encoding = 'utf-8', baud = DEFAULT_BAUD):
         super().__init__(uart_id, tx_pin, rx_pin, encoding, baud)
@@ -187,7 +209,7 @@ class Rmt_Uart(BaseUart):
 
 
     def _write_impl(self, message):
-        print("start rmt write impl. Message: " + message + " len: " + str(len(message)))
+        # print("start rmt write impl. Message: " + message + " len: " + str(len(message)))
 
         data = message.encode(self.encoding)
         

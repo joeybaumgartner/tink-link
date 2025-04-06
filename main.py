@@ -70,7 +70,7 @@ def connect_saved_network():
         print("No saved connection found, clearing STA settings.")
         clear_sta_settings()
 
-def connect_to_telnet(filename: str) -> dict:
+def get_telnet_config(filename: str) -> dict:
     try:
         with open(filename) as f:
             config = json.load(f)
@@ -95,12 +95,12 @@ async def main():
     # Start servers/tasks
     captive_portal.start_dns_server_task()
     web_server.start_web_server()
-    uart = uart_async.Hw_Uart(1)
+    uart = uart_async.HwUart(1)
     uart.start()
     extron = ExtronSwVga(uart)
     extron.subscribe()
 
-    config = connect_to_telnet("telnet_config.json")
+    config = get_telnet_config("telnet_config.json")
 
     if config:
         telnet = telnet_async.TelnetConnection(config["hostname"], config["port"], config["username"], config["password"], config["init_string"])
