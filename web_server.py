@@ -156,64 +156,6 @@ async def ws_terminal(request, ws):
         terminal_websockets.remove(ws)
         print("Terminal WebSocket client removed")
 
-
-
-# Control panel page with dynamic content; now using Template
-@app.get('/control-panel-broken')
-async def control_panel_broken(request):
-    try:
-        wifi_info = await information.get_wifi_info()
-        available = wifi_info.get('available_networks', [])
-        
-        hotspot = {
-            "ssid": "None",
-            "domain": "tinklink.local",
-            "ip": wifi_info.get('ip', '0.0.0.0'),
-            "hotspot_mode": hotspot_control.get_hotspot_mode()
-        }
-
-        sta_connected = wifi_info.get('sta_connected', False)
-
-        sta_status = {
-            "connected": sta_connected,
-            "connection_status": "Connected" if sta_connected else "Not Connected",
-            "ssid": wifi_info.get('sta_ssid', 'N/A') or "N/A",
-            "ip": wifi_info.get('sta_ip', '0.0.0.0')
-        }
-
-        try:
-            os.stat("saved_connection.txt")
-            saved_connection_exists = True
-            with open("saved_connection.txt", "r") as f:
-                lines = f.read().splitlines()
-            saved_ssid = lines[0] if len(lines) >= 2 else None
-            saved_password = lines[1] if len(lines) >= 2 else None
-        except OSError:
-            saved_connection_exists = False
-            saved_ssid = None
-
-        #if not sta_connected:
-        #        global last_valid_password
-        #        saved_password = last_valid_password if last_valid_password else ""
-
-        saved = {
-            "connection_exists": saved_connection_exists,
-            "ssid": saved_ssid if saved_connection_exists and saved_ssid else "None",
-            "password": saved_password if saved_connection_exists and saved_password else ""
-        }
-
-        try:
-            with open("/static/html/status_response.html", "r") as f:
-                return f.read()
-        except OSError:
-            return None
-
-        return send_file("/static/html/control_panel.html", max_age=1)
-        # Templates have been removed
-        #return Template('control_panel.html').render(hotspot=hotspot, sta_status=sta_status, saved=saved)
-    except OSError:
-        return Response("control_panel.html not found", status_code=404)
-
 # Control panel page with dynamic content
 @app.route('/control-panel')
 async def control_panel(request):
