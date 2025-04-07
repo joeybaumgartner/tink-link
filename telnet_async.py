@@ -1,5 +1,5 @@
 import uasyncio as asyncio
-from pubsub import pubsub, PubSub, Topics, Origin
+from pubsub import getPubSub, PubSub, Topics, Origin
 from telnet import TelnetClient
 
 class TelnetConnection:
@@ -31,16 +31,16 @@ class TelnetConnection:
             self._telnet_task = asyncio.create_task(self._read_telnet())
 
         # Determine which I need
-        pubsub.subscribe(Topics.REMOTE_MESSAGE, self._on_pubsub_message, self.pubsub_origin)
-        pubsub.subscribe(Topics.TCP_MESSAGE, self._on_pubsub_message, self.pubsub_origin)
-        pubsub.subscribe(Topics.TERMINAL_MESSAGE, self._on_pubsub_message, self.pubsub_origin)
+        getPubSub().subscribe(Topics.REMOTE_MESSAGE, self._on_pubsub_message, self.pubsub_origin)
+        getPubSub().subscribe(Topics.TCP_MESSAGE, self._on_pubsub_message, self.pubsub_origin)
+        getPubSub().subscribe(Topics.TERMINAL_MESSAGE, self._on_pubsub_message, self.pubsub_origin)
 
 
     async def stop(self):
         self.run_task = False
-        pubsub.unsubscribe(Topics.REMOTE_MESSAGE, self._on_pubsub_message)
-        pubsub.unsubscribe(Topics.TCP_MESSAGE, self._on_pubsub_message)
-        pubsub.unsubscribe(Topics.TERMINAL_MESSAGE, self._on_pubsub_message)
+        getPubSub().unsubscribe(Topics.REMOTE_MESSAGE, self._on_pubsub_message)
+        getPubSub().unsubscribe(Topics.TCP_MESSAGE, self._on_pubsub_message)
+        getPubSub().unsubscribe(Topics.TERMINAL_MESSAGE, self._on_pubsub_message)
         res = await self._telnet_task
 
     async def _read_telnet(self):
@@ -56,7 +56,7 @@ class TelnetConnection:
             except Exception as e:
                 message = f"Exception: {e}"
                 
-            pubsub.publish(Topics.TELNET_MESSAGE, message, self.pubsub_origin)
+            getPubSub().publish(Topics.TELNET_MESSAGE, message, self.pubsub_origin)
 
             await asyncio.sleep_ms(50)
             

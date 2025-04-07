@@ -1,7 +1,6 @@
 import os
 import network
 import time
-from extron_mav_crosspoint import ExtronMavCrosspoint
 import uasyncio as asyncio
 import captive_portal
 import web_server
@@ -11,6 +10,7 @@ import telnet_async
 import hotspot_control
 import information 
 from extron_sw_vga import ExtronSwVga
+from extron_mav_crosspoint import ExtronMavCrosspoint
 import json
 
 # AP configuration constants

@@ -7,7 +7,7 @@ import hotspot_control
 import information
 import network
 import os
-from pubsub import pubsub, PubSub, Topics, Origin
+from pubsub import getPubSub, PubSub, Topics, Origin
 from extron_sw_vga import SwitcherState
 
 app = Microdot()
@@ -64,13 +64,10 @@ async def apple_success(request):
     return Response('', status_code=302, headers={'Location': 'http://10.0.0.1/'})
 
 
-
-
-
 # WebSocket endpoint with added debug prints for remote commands
 
-pubsub_remote_origin = PubSub.create_origin("remote")
-remote_websockets = set()            # WebSocket objects
+pubsub_remote_origin = None
+remote_websockets = None
 async def _on_message_remote(payload: str, topic: str, origin: Origin):
     # Send to WebSocket clients:
     global remote_websockets
@@ -83,9 +80,7 @@ async def _on_message_remote(payload: str, topic: str, origin: Origin):
             print("Error broadcasting to remote client:", e)
     
 
-pubsub.subscribe(Topics.UART_MESSAGE, _on_message_remote, pubsub_remote_origin)
-pubsub.subscribe(Topics.TCP_MESSAGE, _on_message_remote, pubsub_remote_origin)
-pubsub.subscribe(Topics.TERMINAL_MESSAGE, _on_message_remote, pubsub_remote_origin)
+
 
 @app.route('/ws')
 @with_websocket
@@ -103,11 +98,11 @@ async def ws_endpoint(request, ws):
             else:
                 full_command = "remote " + msg + "\r\n"
                 print("Broadcasting command:", full_command)
-                pubsub.publish(Topics.REMOTE_MESSAGE, full_command, pubsub_remote_origin)
+                getPubSub().publish(Topics.REMOTE_MESSAGE, full_command, pubsub_remote_origin)
             if msg == "pwr":
                 full_command = "pwr on\r\n"
                 print("Broadcasting command:", "pwr on")
-                pubsub.publish(Topics.REMOTE_MESSAGE, full_command, pubsub_remote_origin)
+                getPubSub().publish(Topics.REMOTE_MESSAGE, full_command, pubsub_remote_origin)
     finally:
         remote_websockets.remove(ws)
         print("WebSocket client removed")
@@ -122,8 +117,8 @@ async def terminal_page(request):
 
 # Terminal WebSocket endpoint for serial commands (no "remote" prefix)
 
-pubsub_terminal_origin = PubSub.create_origin("terminal")
-terminal_websockets = set()
+pubsub_terminal_origin = None
+terminal_websockets = None
 
 async def _on_message_terminal(payload: any, topic: str, origin: Origin):
     # Send to WebSocket clients:
@@ -136,10 +131,7 @@ async def _on_message_terminal(payload: any, topic: str, origin: Origin):
         except Exception as e:
             print("Error broadcasting to terminal client:", e)
 
-pubsub.subscribe(Topics.UART_MESSAGE, _on_message_terminal, pubsub_terminal_origin)
-pubsub.subscribe(Topics.TCP_MESSAGE, _on_message_terminal, pubsub_terminal_origin)
-pubsub.subscribe(Topics.REMOTE_MESSAGE, _on_message_terminal, pubsub_terminal_origin)
-pubsub.subscribe(Topics.SWITCHER_STATECHANGED, _on_message_terminal, pubsub_terminal_origin)
+
 
 
 @app.route('/ws_terminal')
@@ -158,7 +150,7 @@ async def ws_terminal(request, ws):
             # Send command with CR+LF without the "remote" prefix
             full_command = msg + "\r\n"
             print("Broadcasting terminal command:", full_command)
-            pubsub.publish(Topics.TERMINAL_MESSAGE, full_command, pubsub_terminal_origin)
+            getPubSub().publish(Topics.TERMINAL_MESSAGE, full_command, pubsub_terminal_origin)
             
     finally:
         terminal_websockets.remove(ws)
@@ -496,6 +488,24 @@ def not_found(request):
     return Response(status_code=302, headers={'Location': '/remote-page'})
     
 def start_web_server():
+    global pubsub_terminal_origin
+    global terminal_websockets
+    pubsub_terminal_origin = PubSub.create_origin("terminal")
+    terminal_websockets = set()
+    
+    global pubsub_remote_origin
+    global remote_websockets
+    pubsub_remote_origin = PubSub.create_origin("remote")
+    remote_websockets = set()
+    
+    getPubSub().subscribe(Topics.UART_MESSAGE, _on_message_remote, pubsub_remote_origin)
+    getPubSub().subscribe(Topics.TCP_MESSAGE, _on_message_remote, pubsub_remote_origin)
+    getPubSub().subscribe(Topics.TERMINAL_MESSAGE, _on_message_remote, pubsub_remote_origin)
+    getPubSub().subscribe(Topics.UART_MESSAGE, _on_message_terminal, pubsub_terminal_origin)
+    getPubSub().subscribe(Topics.TCP_MESSAGE, _on_message_terminal, pubsub_terminal_origin)
+    getPubSub().subscribe(Topics.REMOTE_MESSAGE, _on_message_terminal, pubsub_terminal_origin)
+    getPubSub().subscribe(Topics.SWITCHER_STATECHANGED, _on_message_terminal, pubsub_terminal_origin)
+
     # Start both the web server and the UART loopback reader concurrently.
     server_task = asyncio.create_task(app.start_server(host='0.0.0.0', port=80))
     return server_task

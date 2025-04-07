@@ -1,5 +1,5 @@
 import uasyncio as asyncio
-from pubsub import pubsub, PubSub, Topics, Origin
+from pubsub import getPubSub, PubSub, Topics, Origin
 
 # Global sets for shared chat room clients
 chat_clients_serial_over_tcp = set()      # serial_over_tcp client writer objects
@@ -18,9 +18,9 @@ async def on_message(payload: str, topic: str, origin: Origin):
     clean_message = payload.strip()
     print(f"tx: {origin.name}: [{clean_message}]. rx: {pubsub_tcp_origin.name}")
 
-pubsub.subscribe(Topics.UART_MESSAGE, on_message, pubsub_tcp_origin)
-pubsub.subscribe(Topics.REMOTE_MESSAGE, on_message, pubsub_tcp_origin)
-pubsub.subscribe(Topics.TERMINAL_MESSAGE, on_message, pubsub_tcp_origin)
+getPubSub().subscribe(Topics.UART_MESSAGE, on_message, pubsub_tcp_origin)
+getPubSub().subscribe(Topics.REMOTE_MESSAGE, on_message, pubsub_tcp_origin)
+getPubSub().subscribe(Topics.TERMINAL_MESSAGE, on_message, pubsub_tcp_origin)
 
 async def handle_serial_over_tcp(reader, writer):
     """
@@ -42,7 +42,7 @@ async def handle_serial_over_tcp(reader, writer):
             msg = line.decode('utf-8').strip().replace('\t', '')
             print("serial_over_tcp received:", msg)
             # Broadcast the message as received with CR/LF
-            pubsub.publish(Topics.TCP_MESSAGE, msg, pubsub_tcp_origin)
+            getPubSub().publish(Topics.TCP_MESSAGE, msg, pubsub_tcp_origin)
         print("serial_over_tcp client finished sending data:", addr)
     except Exception as e:
         print("serial_over_tcp error:", e)
