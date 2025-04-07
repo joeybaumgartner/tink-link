@@ -103,11 +103,15 @@ async def main():
     config = get_telnet_config("telnet_config.json")
 
     if config:
-        telnet = telnet_async.TelnetConnection(config["hostname"], config["port"], config["username"], config["password"], config["init_string"])
-        telnet.start()
+        try:
+            telnet = telnet_async.TelnetConnection(config["hostname"], config["port"], config["username"], config["password"], config["init_string"])
+            await telnet.start()
 
-        extroncp = ExtronMavCrosspoint(telnet)
-        extroncp.subscribe()
+            extroncp = ExtronMavCrosspoint(telnet)
+            extroncp.subscribe()
+        except OSError as oe:
+            print(f"Could not connect to telnet server: {oe}")
+
 
     tcp_async.start_serial_over_tcp_server(port=8023)
 

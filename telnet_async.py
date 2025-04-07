@@ -2,6 +2,11 @@ import uasyncio as asyncio
 from pubsub import getPubSub, PubSub, Topics, Origin
 from telnet import TelnetClient
 
+# Global sets for shared chat room clients
+chat_clients_serial_over_tcp = set()      # serial_over_tcp client writer objects
+
+pubsub_tcp_origin = PubSub.create_origin("tcp")
+
 class TelnetConnection:
 
     def __init__(self, hostname: str, port: int, username: str = "", password: str = "", init_string: str = ""):
@@ -10,22 +15,19 @@ class TelnetConnection:
         self.is_open = False
         self._telnet_task = None
 
-    def open(self):
-        print("opening connection")
-        # figure out how to do connection in here? maybe?
-
     def close(self):
         self.telnetClient.deinit()
         self.telnetClient = None
 
-    def start(self):
-        print("Starting telnet connection")
+    async def start(self):
 
-        if not self.is_open:
-            self.open()
-        self.run_task = True
+        await self.telnetClient.connect()
 
-        asyncio.wait_for(self.telnetClient.connect(), 10)
+        if self.telnetClient.connected:
+            print("Telnet client connected")
+            self.run_task = True
+        else:
+            print("Could not connect")
 
         if self._telnet_task is None or self._telnet_task.done():
             self._telnet_task = asyncio.create_task(self._read_telnet())
@@ -50,9 +52,6 @@ class TelnetConnection:
             try:
                 data = await self.telnetClient.readline()
                 message = f"{data}\r\n"
-            except OSError as e:
-                await self.telnetClient.reconnect()
-                message = "Reconnected"
             except Exception as e:
                 message = f"Exception: {e}"
                 
@@ -61,12 +60,12 @@ class TelnetConnection:
             await asyncio.sleep_ms(50)
             
     async def _on_pubsub_message(self, payload: str, topic: str, origin: Origin):
-        # copying what's in tcp-async for now
-        prefix = self.pubsub.origin_name + ": "
-        try:
-            if(payload.find(prefix) == 0):
-                message = payload[len(prefix):]
-                self.telnetClient.write(message)
-                print(f"tx: {origin.name} [{message.strip()}. rx {self.pubsub_origin.name}]")
-        except Exception as e:
-            print("Error writing to telnet: ", e)
+        # Send to serial_over_tcp clients:
+        for writer in list(chat_clients_serial_over_tcp):
+            try:
+                writer.write(payload.encode('utf-8'))
+                await writer.drain()
+            except Exception as e:
+                print("Error broadcasting to raw_tcp client:", e)
+        clean_message = payload.strip()
+        print(f"tx: {origin.name}: [{clean_message}]. rx: {pubsub_tcp_origin.name}")

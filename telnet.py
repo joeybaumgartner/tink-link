@@ -2,6 +2,7 @@ try:
     import uasyncio as asyncio
 except:
     import asyncio
+import time
 
 class TelnetClient:
 
@@ -17,60 +18,77 @@ class TelnetClient:
         self.connected = False
         self.initialized = False
 
+        # just for now
+        self.reconnect_delay = 1
+
     async def connect(self):
-        try:
-            print(f"Trying to connect to telnet: {self.hostname}:{self.port}")
-            self.reader, self.writer = await asyncio.open_connection(self.hostname, self.port)
-            self.connected = True
-        except OSError as oe:
-            raise ValueError(f"OS Connection Error {oe}")
-        except Exception as e:
-            raise ValueError(f"General Error on Connect {oe}")
+        print(f"Trying to connect to telnet: {self.hostname}:{self.port}")
+        self.reader, self.writer = await asyncio.open_connection(self.hostname, self.port)
+        self.connected = True
+
+        await self._auto_login()
+
+        if self.init_string:
+            await asyncio.sleep_ms(50)
+            await self.send(self.init_string)
         
-    async def init(self):
-        # Attempt to read back banner from connecting.
-        # We don't do anything with this, but we need it out of
-        # the stream.
-        data = await self.reader.read(200)
+    async def _auto_login(self, timeout=10):
+        """Attempt to automatically log in using readline()."""
+        start_time = time.ticks_ms()
+        timeout_ms = timeout * 1000
 
-        if self.password != "":
-            print("Attempting to login")
-            self.writer.write(f"{self.password}\r\n".encode())
-            text = await self.reader.readline()
-            print("text output: " , text.decode(self.encoding).strip())
+        while time.ticks_diff(time.ticks_ms(), start_time) < timeout_ms:
+            try:
+                line = await self.reader.read(200)
+            except asyncio.TimeoutError:
+                continue
 
-        if self.init_string != "":
-            h = bytes(f"{self.init_string}\r\n", self.encoding)
-            self.writer.write(h)
-            data = await self.reader.readline()
-            data = data.decode(self.encoding).strip()
-            print(f"Init response: {data}")
+            if not line:
+                break
 
-        self.initialized = True
+            decoded = line.decode(self.encoding).strip().lower()
 
-
-    async def reconnect(self) -> str:
-        await self.connect()
-        await self.init()
+            if any(prompt in decoded for prompt in ['login:', 'username:', 'user:']):
+                if self.username != "":
+                    await asyncio.sleep_ms(50)
+                    await self.send(self.username + '\r\n')
+            elif 'password:' in decoded:
+                if self.password != "":
+                    await asyncio.sleep_ms(50)
+                    await self.send(self.password + '\r\n')
+                    return  # Done with login
+            else:
+                return
+        print("Login sequence timed out or incomplete.")
 
     async def readline(self) -> str:
-        if not self.connected:
-            await self.connect()
+        while True:
+            if not self.connected:
+                await self._reconnect()
 
-        if not self.initialized:
-            await self.init()
+            try:
+                line = await self.reader.readline()
+                if not line:
+                    self.connected = False
+                    continue
+                return line.decode(self.encoding).strip()
+            except Exception as e:
+                self.connected = False
+                await asyncio.sleep(self.reconnect_delay)
 
-        data = await self.reader.readline()
-        r = data.decode(self.encoding).strip()
-        
-        return r
+    async def _reconnect(self):
+        print("Reconnecting")
+        await self.close()
+        await asyncio.sleep(self.reconnect_delay)
+        await self.connect()
     
-    async def write(self, message: str):
-        message = message + "\r\n"   # <- function should be named writeline
-        if self.connected:
-            data = bytes(message, self.encoding)
-            self.writer.write(data)
-            self.writer.drain()
+    async def send(self, message: str):
+        if self.connected and self.writer:
+            message = message + '\r\n'
+            if self.connected and self.writer:
+                data = bytes(message, self.encoding)
+                self.writer.write(data)
+                await self.writer.drain()
 
     async def close(self):
         if self.writer:
