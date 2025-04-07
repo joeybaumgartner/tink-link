@@ -1,4 +1,3 @@
-from typing import Callable, Dict, List, Any
 import uasyncio as asyncio
 from async_queue import AsyncQueue
 
@@ -35,7 +34,7 @@ class PubSub:
         """Create an origin identifier. Uses an object with a name property."""
         return Origin(name)
 
-    def subscribe(self, topic: str, callback: Callable[[Any, str, Any], None], origin: Any = None) -> None:
+    def subscribe(self, topic: str, callback, origin = None) -> None:
         """
         Subscribe to a topic with a callback and optional origin.
         
@@ -48,7 +47,7 @@ class PubSub:
             self._subscriptions[topic] = []
         self._subscriptions[topic].append({"callback": callback, "origin": origin})
 
-    def unsubscribe(self, topic: str, callback: Callable[[Any, str, Any], None]) -> None:
+    def unsubscribe(self, topic: str, callback) -> None:
         """Unsubscribe a callback from a topic."""
         if topic in self._subscriptions:
             self._subscriptions[topic] = [
@@ -57,7 +56,7 @@ class PubSub:
             if not self._subscriptions[topic]:
                 del self._subscriptions[topic]
 
-    def publish(self, topic: str, payload: Any, origin: Any = None) -> None:
+    def publish(self, topic: str, payload, origin = None) -> None:
         """Publish a message asynchronously, ensuring sequential processing."""
         if topic in self._subscriptions:
             for sub in self._subscriptions[topic]:
@@ -84,5 +83,11 @@ class PubSub:
         return res
 
 
-# Create a shared instance of PubSub
-pubsub = PubSub()
+_pubsub = None
+
+# Get a shared instance of PubSub
+def getPubSub():
+    global _pubsub
+    if _pubsub == None:
+        _pubsub = PubSub()
+    return _pubsub

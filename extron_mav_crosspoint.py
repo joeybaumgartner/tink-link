@@ -1,7 +1,6 @@
 import uasyncio as asyncio
-from pubsub import pubsub, PubSub, Topics, Origin
-from typing import Callable, Dict, List, Any
-from telnet_async import TelnetClient
+from pubsub import getPubSub, PubSub, Topics, Origin
+from telnet import TelnetClient
 
 class ExtronSwitcherState:
     def __init__(self, preset: int):
@@ -48,7 +47,7 @@ class ExtronMavCrosspoint:
             preset = line.get_input()
             self.state.preset = preset
             print("Extron state change published: ", self.state)
-            pubsub.publish(Topics.SWITCHER_STATECHANGED, self.state.clone(), self.pubsub_origin)
+            getPubSub().publish(Topics.SWITCHER_STATECHANGED, self.state.clone(), self.pubsub_origin)
 
     def subscribe(self):
-        pubsub.subscribe(Topics.TELNET_MESSAGE, self._on_message, self.pubsub_origin)
+        getPubSub().subscribe(Topics.TELNET_MESSAGE, self._on_message, self.pubsub_origin)

@@ -1,6 +1,6 @@
 from machine import Pin, UART
 import uasyncio as asyncio
-from pubsub import pubsub, PubSub, Topics, Origin
+from pubsub import getPubSub, PubSub, Topics, Origin
 from esp32 import RMT
 import time
 import math
@@ -37,9 +37,9 @@ class BaseUart:
             self.open()
         self.running = True
 
-        pubsub.subscribe(Topics.REMOTE_MESSAGE, self._on_pubsub_message, self.pubsub_origin)
-        pubsub.subscribe(Topics.TCP_MESSAGE, self._on_pubsub_message, self.pubsub_origin)
-        pubsub.subscribe(Topics.TERMINAL_MESSAGE, self._on_pubsub_message, self.pubsub_origin)
+        getPubSub().subscribe(Topics.REMOTE_MESSAGE, self._on_pubsub_message, self.pubsub_origin)
+        getPubSub().subscribe(Topics.TCP_MESSAGE, self._on_pubsub_message, self.pubsub_origin)
+        getPubSub().subscribe(Topics.TERMINAL_MESSAGE, self._on_pubsub_message, self.pubsub_origin)
 
 
     async def _on_pubsub_message(self, payload: str, topic: str, origin: Origin):
@@ -67,9 +67,9 @@ class BaseUart:
         Requests the uart to end and waits until it does. 
         """
         self.running = False
-        pubsub.unsubscribe(Topics.REMOTE_MESSAGE, self._on_pubsub_message)
-        pubsub.unsubscribe(Topics.TCP_MESSAGE, self._on_pubsub_message)
-        pubsub.unsubscribe(Topics.TERMINAL_MESSAGE, self._on_pubsub_message)
+        getPubSub().unsubscribe(Topics.REMOTE_MESSAGE, self._on_pubsub_message)
+        getPubSub().unsubscribe(Topics.TCP_MESSAGE, self._on_pubsub_message)
+        getPubSub().unsubscribe(Topics.TERMINAL_MESSAGE, self._on_pubsub_message)
 
 
 
@@ -144,7 +144,7 @@ class HwUart(BaseUart):
                                 msg = self._line_buffer.decode(self.encoding).strip() + '\r\n'
                                 self._line_buffer = bytearray() # reset buffer
                                 print("UART received:", msg)
-                                pubsub.publish(Topics.UART_MESSAGE, msg, self.pubsub_origin)
+                                getPubSub().publish(Topics.UART_MESSAGE, msg, self.pubsub_origin)
                             except Exception as e:
                                 print("Decode error:", e)
                                 msg = str(self._line_buffer)

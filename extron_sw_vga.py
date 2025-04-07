@@ -1,6 +1,5 @@
 import uasyncio as asyncio
-from pubsub import pubsub, PubSub, Topics, Origin
-from typing import Callable, Dict, List, Any
+from pubsub import getPubSub, PubSub, Topics, Origin
 from uart_async import BaseUart
 
 
@@ -52,7 +51,7 @@ class ExtronSwVga:
             input = line.get_input()
             self.state.activeInput = input
             print("Extron state change published: ", self.state)
-            pubsub.publish(Topics.SWITCHER_STATECHANGED, self.state.clone(), self.pubsub_origin)
+            getPubSub().publish(Topics.SWITCHER_STATECHANGED, self.state.clone(), self.pubsub_origin)
 
     def subscribe(self):
-        pubsub.subscribe(Topics.UART_MESSAGE, self._on_message, self.pubsub_origin)
+        getPubSub().subscribe(Topics.UART_MESSAGE, self._on_message, self.pubsub_origin)
