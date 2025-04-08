@@ -2,13 +2,11 @@ import json
 from microdot import Microdot, Response, send_file #Microdot handles web service
 from microdot.websocket import with_websocket #websocket Microdot extension
 import uasyncio as asyncio #allows aynchronous task handling
-import uart_async #async uart tx and rx and machine pin config
 import hotspot_control
 import information
 import network
 import os
 from pubsub import getPubSub, PubSub, Topics, Origin
-from extron_sw_vga import SwitcherState
 
 app = Microdot()
 
@@ -495,15 +493,8 @@ def start_web_server():
     global remote_websockets
     pubsub_remote_origin = PubSub.create_origin("remote")
     remote_websockets = set()
-    
-    #getPubSub().subscribe(Topics.UART_MESSAGE, _on_message_remote, pubsub_remote_origin)
-    #getPubSub().subscribe(Topics.TCP_MESSAGE, _on_message_remote, pubsub_remote_origin)
-    #getPubSub().subscribe(Topics.TERMINAL_MESSAGE, _on_message_remote, pubsub_remote_origin)
 
     getPubSub().subscribe("/*", _on_message_terminal, pubsub_terminal_origin)
-    #getPubSub().subscribe(Topics.TCP_MESSAGE, _on_message_terminal, pubsub_terminal_origin)
-    #getPubSub().subscribe(Topics.REMOTE_MESSAGE, _on_message_terminal, pubsub_terminal_origin)
-    #getPubSub().subscribe(Topics.SWITCHER_STATECHANGED, _on_message_terminal, pubsub_terminal_origin)
 
     # Start both the web server and the UART loopback reader concurrently.
     server_task = asyncio.create_task(app.start_server(host='0.0.0.0', port=80))

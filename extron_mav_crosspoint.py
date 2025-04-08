@@ -1,16 +1,17 @@
 import uasyncio as asyncio
 from pubsub import getPubSub, PubSub, Topics, Origin
 from telnet import TelnetClient
+import telnet_async
 
-class ExtronSwitcherState:
-    def __init__(self, preset: int):
+class ExtronMavCpState:
+    def __init__(self, preset: int = 0):
         self.preset = preset
 
     def clone(self):
-        return ExtronSwitcherState(self.preset)
+        return ExtronMavCpState(self.preset)
     
     def __repr__(self):
-        return f"ExtronSwitcherState(preset={self.preset})"
+        return f"ExtronMavCpState(preset={self.preset})"
     
 class Line:
     def __init__(self, line:str):
@@ -35,11 +36,24 @@ class Line:
         else:
             return -1 # not en error
         
-class ExtronMavCrosspoint:
+class ExtronMavCp:
     def __init__(self, telnetClient: TelnetClient):
-        self.state = ExtronSwitcherState(0)
-        self.pubsub_origin = PubSub.create_origin("ExtronMavCrosspoint")
+        self.state = ExtronMavCpState()
+        self.pubsub_origin = PubSub.create_origin("ExtronMavCp")
         self.telnetClient = telnetClient
+
+
+    @classmethod
+    def create_from_config(cls, config: dict):    
+        conn = config.get("connection", {})
+        telnet = telnet_async.TelnetConnection(
+            config.get("hostname"), config.get("port"), config.get("username", ""), config.get("password", ""), config.get("init_string", "")
+        )
+        telnet.start()
+        extroncp = ExtronMavCp(telnet)
+        extroncp.subscribe()
+        return extroncp
+    
 
     async def _on_message(self, payload: str, topic: str, origin: Origin):
         line = Line(payload)
