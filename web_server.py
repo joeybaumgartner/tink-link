@@ -124,14 +124,12 @@ async def _on_message_terminal(payload: any, topic: str, origin: Origin):
     # Send to WebSocket clients:
     global terminal_websockets
     for ws in terminal_websockets:
-        message = origin.name + ":" + str(payload)
+        message = f"[{origin.name}] {topic} > {str(payload)}"
         try:
             await ws.send(message)
             print(f"tx: {origin.name}: [{message.strip()}]. rx: {pubsub_terminal_origin.name}")
         except Exception as e:
             print("Error broadcasting to terminal client:", e)
-
-
 
 
 @app.route('/ws_terminal')
@@ -498,13 +496,14 @@ def start_web_server():
     pubsub_remote_origin = PubSub.create_origin("remote")
     remote_websockets = set()
     
-    getPubSub().subscribe(Topics.UART_MESSAGE, _on_message_remote, pubsub_remote_origin)
-    getPubSub().subscribe(Topics.TCP_MESSAGE, _on_message_remote, pubsub_remote_origin)
-    getPubSub().subscribe(Topics.TERMINAL_MESSAGE, _on_message_remote, pubsub_remote_origin)
-    getPubSub().subscribe(Topics.UART_MESSAGE, _on_message_terminal, pubsub_terminal_origin)
-    getPubSub().subscribe(Topics.TCP_MESSAGE, _on_message_terminal, pubsub_terminal_origin)
-    getPubSub().subscribe(Topics.REMOTE_MESSAGE, _on_message_terminal, pubsub_terminal_origin)
-    getPubSub().subscribe(Topics.SWITCHER_STATECHANGED, _on_message_terminal, pubsub_terminal_origin)
+    #getPubSub().subscribe(Topics.UART_MESSAGE, _on_message_remote, pubsub_remote_origin)
+    #getPubSub().subscribe(Topics.TCP_MESSAGE, _on_message_remote, pubsub_remote_origin)
+    #getPubSub().subscribe(Topics.TERMINAL_MESSAGE, _on_message_remote, pubsub_remote_origin)
+
+    getPubSub().subscribe("/*", _on_message_terminal, pubsub_terminal_origin)
+    #getPubSub().subscribe(Topics.TCP_MESSAGE, _on_message_terminal, pubsub_terminal_origin)
+    #getPubSub().subscribe(Topics.REMOTE_MESSAGE, _on_message_terminal, pubsub_terminal_origin)
+    #getPubSub().subscribe(Topics.SWITCHER_STATECHANGED, _on_message_terminal, pubsub_terminal_origin)
 
     # Start both the web server and the UART loopback reader concurrently.
     server_task = asyncio.create_task(app.start_server(host='0.0.0.0', port=80))
