@@ -1,17 +1,7 @@
 import uasyncio as asyncio
 from pubsub import getPubSub, PubSub, Topics, Origin
 from uart_async import BaseUart, HwUart
-
-
-class ExtronSwVgaState:
-    def __init__(self, activeInput: int = 0):
-        self.activeInput = activeInput
-
-    def clone(self):
-        return ExtronSwVgaState(self.activeInput)
-    
-    def __repr__(self):
-        return f"ExtronSwVgaState(activeInput={self.activeInput})"
+from base_switcher import BaseSwitcher, SwitcherTrigger
 
 
 class Line:
@@ -38,9 +28,9 @@ class Line:
             return -1 # not en error
 
 
-class ExtronSwVga:
+class ExtronSwVga(BaseSwitcher):
     def __init__(self, uart: BaseUart):
-        self.state = ExtronSwVgaState()
+        super().__init__()
         self.pubsub_origin = PubSub.create_origin("ExtronSwVga")
         self.uart = uart
 
@@ -49,19 +39,36 @@ class ExtronSwVga:
     def create_from_config(cls, config: dict):
         conn = config.get("connection", {})
         uart = HwUart(conn.get("uartId", 1), conn.get("txPin", 21), conn.get("rxPin", 20))
-        uart.start()
         extron = ExtronSwVga(uart)
-        extron.subscribe()
+        triggers_conf = config.get("triggers", [])
+        for trigger_conf in triggers_conf:
+            if "input" not in trigger_conf or "mode" not in trigger_conf or "profile" not in trigger_conf:
+                print("Malformed trigger conf for ExtronSwVga: ", trigger_conf)
+                continue
+            trig = SwitcherTrigger(
+                str(trigger_conf.get("input")), trigger_conf.get("mode"), trigger_conf.get("profile"), trigger_conf.get("name", None)
+            )
+            extron.addTrigger(trig)
         return extron
-
+    
 
     async def _on_message(self, payload: str, topic: str, origin: Origin):
         line = Line(payload)
         if line.is_input():
             input = line.get_input()
-            self.state.activeInput = input
-            print("Extron state change published: ", self.state)
-            getPubSub().publish(Topics.SWITCHER_STATECHANGED, self.state.clone(), self.pubsub_origin)
+            trigger = self.findTrigger(str(input))
+            if trigger != None:
+                print("Extron trigger change published: ", trigger)
+                getPubSub().publish(Topics.SWITCHER_TRIGGERCHANGED, trigger.clone(), self.pubsub_origin)
+            else:
+                print("extron input change detected but no matching trigger found")
 
-    def subscribe(self):
+
+    async def start(self):
+        self.uart.start()
         getPubSub().subscribe(Topics.UART_MESSAGE, self._on_message, self.pubsub_origin)
+
+
+    async def stop(self):
+        self.uart.stop()
+        getPubSub().unsubscribe(Topics.UART_MESSAGE, self._on_message)

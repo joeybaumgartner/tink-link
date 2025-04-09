@@ -2,12 +2,12 @@ import uasyncio as asyncio
 from async_queue import AsyncQueue
 
 class Topics:
-    UART_MESSAGE = "/uart/message"                      # payload: str
-    TCP_MESSAGE = "/tcp/message"                        # payload: str
-    REMOTE_MESSAGE = "/remote/message"                  # payload: str
-    TERMINAL_MESSAGE = "/terminal/message"              # payload: str
-    SWITCHER_STATECHANGED = "/switcher/stateChanged"    # payload: ExtronMavCpState | ExtronSwVgaState
-    TELNET_MESSAGE = "/telnet/message"                  # payload: str
+    UART_MESSAGE = "/uart/message"                          # payload: str
+    TCP_MESSAGE = "/tcp/message"                            # payload: str
+    REMOTE_MESSAGE = "/remote/message"                      # payload: str
+    TERMINAL_MESSAGE = "/terminal/message"                  # payload: str
+    SWITCHER_TRIGGERCHANGED = "/switcher/triggerChanged"    # payload: SwitcherTrigger
+    TELNET_MESSAGE = "/telnet/message"                      # payload: str
 
 
 

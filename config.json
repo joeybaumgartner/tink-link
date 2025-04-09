@@ -41,11 +41,11 @@
         },{
             "name":"Super Nintendo",
             "preset": 2,
-            "mode": "remote",
+            "mode": "Remote",
             "profle": 2
         }]
     },{
-        "enabled": false,
+        "enabled": true,
         "type": "ExtronSwVga",
         "name": "Extron SW VGA",
         "connection": {

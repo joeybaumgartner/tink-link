@@ -41,19 +41,24 @@ class BaseUart:
 
     async def _on_pubsub_message(self, payload: str, topic: str, origin: Origin):
         prefix = self.pubsub_origin.name + ":"
+        message = str(payload) # ensure payload is handled as a string
         try:
-            if(payload.find(prefix) == 0):
-                message = payload[len(prefix):]
-                message = message + "\r\n"
+            if(message.find(prefix) == 0):
+                message = message[len(prefix):]
                 self.write(message)
                 print(f"tx: {origin.name}: [{message.strip()}]. rx: {self.pubsub_origin.name}")
         except Exception as e:
             print("Error writing to " + self.pubsub_origin.name + ":", e)
 
 
-    def write(self, message):
+    def write(self, message:str):
         if(self.is_open):
             self._write_impl(message)
+
+    def writeLine(self, message:str):
+        if not(message.endswith("\r\n") or message.endswith("\n")):
+            message = message + "\r\n"
+        self.write(message)
 
 
     def _write_impl(self, message):
@@ -122,12 +127,10 @@ class HwUart(BaseUart):
                         self._line_buffer.append(char)
                         if char == 10: # ASCII '\n'
                             try:
-                                line = self._line_buffer.decode(self.encoding).strip()
+                                line = self._line_buffer.decode(self.encoding)
                                 print("UART received line:", line)
-                                msg = line + '\r\n'
                                 self._line_buffer = bytearray() # reset buffer
-                                print("UART received msg:", msg)
-                                getPubSub().publish(Topics.UART_MESSAGE, msg, self.pubsub_origin)
+                                getPubSub().publish(Topics.UART_MESSAGE, line, self.pubsub_origin)
                             except Exception as e:
                                 print("Decode error:", e)
                                 msg = str(self._line_buffer)
@@ -138,8 +141,8 @@ class HwUart(BaseUart):
 
 
     def _write_impl(self, message):
-        print("HwUart write impl:", message)
         data = message.encode(self.encoding)
+        print("HwUart write impl:", data)
         self.uart.write(data)
         self.uart.flush()
 
@@ -194,11 +197,9 @@ class RmtUart(BaseUart):
 
     def _write_impl(self, message):
         # print("start rmt write impl. Message: " + message + " len: " + str(len(message)))
-        print("RmtUart write impl:", message)
         data = message.encode(self.encoding)
-        
+        print("RmtUart write impl:", data)
         for byte in data:
-            print("byte")
             pulses = [self._duration]  # start bit, low because write_pulses starts low
             state = 0
             # create data bits
@@ -217,6 +218,5 @@ class RmtUart(BaseUart):
                 pulses.append(self._duration * self.num_stop)
             self._rmt.write_pulses(pulses, 0) # start low 
             self._rmt.wait_done(timeout = math.ceil(self._total_tx_time_ms) + 1) # 1ms extra since this is just a timout
-        print("end rmt write impl")
 
 

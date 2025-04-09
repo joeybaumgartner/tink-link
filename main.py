@@ -143,25 +143,25 @@ async def main():
         switcher = None
         type = switcher_conf.get("type", None)
         if type == "ExtronSwVga":
-            switcher = ExtronSwVga.create_from_config(switcher_conf)
+            try:
+                print("Creating ExtronSwVga switcher")    
+                switcher = ExtronSwVga.create_from_config(switcher_conf)
+                await switcher.start()
+            except Exception as e:
+                print("Error creating ExtronSwVga switcher: ", e)    
             switchers.append(switcher)
         elif type == "ExtronMavCp":
-            switcher = ExtronMavCp.create_from_config(switcher_conf)
+            try:
+                print("Creating ExtronMavCp switcher")    
+                switcher = ExtronMavCp.create_from_config(switcher_conf)
+                await switcher.start()
+            except Exception as e:
+                print("Error creating ExtronMavCp switcher: ", e)
             switchers.append(switcher)
             
     # Start servers/tasks
 
     web_server.start_web_server() # includes remote and terminal websockets
-
-    if config:
-        try:
-            telnet = telnet_async.TelnetConnection(config["hostname"], config["port"], config["username"], config["password"], config["init_string"])
-            await telnet.start()
-
-            extroncp = ExtronMavCrosspoint(telnet)
-            extroncp.subscribe()
-        except OSError as oe:
-            print(f"Could not connect to telnet server: {oe}")
 
     tcpConfig = config.get("tcpServer", {})
     if tcpConfig.get("enabled", False):

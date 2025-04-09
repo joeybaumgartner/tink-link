@@ -1,8 +1,6 @@
 from pubsub import getPubSub, PubSub, Topics, Origin
-from uart_async import BaseUart
-from extron_mav_crosspoint import ExtronMavCpState
-from extron_sw_vga import ExtronSwVgaState
-from uart_async import RmtUart
+from uart_async import BaseUart, RmtUart
+from base_switcher import SwitcherTrigger, ProfileMode
 
 
 class RetrotinkState:
@@ -15,6 +13,7 @@ class RetrotinkState:
     
     def __repr__(self):
         return f"RetrotinkState(power={self.power}, profile_num={self.profile})"
+    
 
 
 class Retrotink:
@@ -25,7 +24,6 @@ class Retrotink:
 
     @classmethod
     def create_from_config(cls, config: dict):
-        print("constructing RmtUart with config: ", config)
         uart = RmtUart(config.get("uartId", 0), config.get("txPin", 1), config.get("rxPin", 0))
         uart.start()
         tink = Retrotink(uart)
@@ -33,9 +31,17 @@ class Retrotink:
         return tink
     
 
-    async def _on_switch_statechange(self, payload, topic, origin: Origin):
-        print("in tink switch statechange")
+    async def _on_switch_statechange(self, payload:SwitcherTrigger, topic, origin: Origin):
+        print("Retrotink detected profile change")
+        if(payload.mode == ProfileMode.SVS):
+            msg = "SVS NEW INPUT=" + str(payload.profile)
+            print("Switching profiles with command: ", msg)
+            self.uart.writeLine(msg)
+        elif(payload.mode == ProfileMode.REMOTE):
+            msg = "remote prof" + str(payload.profile)
+            print("Switching profiles with command: ", msg)
+            self.uart.writeLine(msg)
 
 
     def subscribe(self):
-        getPubSub().subscribe(Topics.SWITCHER_STATECHANGED, self._on_switch_statechange, self.pubsub_origin)
+        getPubSub().subscribe(Topics.SWITCHER_TRIGGERCHANGED, self._on_switch_statechange, self.pubsub_origin)
