@@ -149,6 +149,45 @@ async def ws_terminal(request, ws):
         terminal_websockets.remove(ws)
         print("Terminal WebSocket client removed")
 
+@app.route('/control-panel-data')
+async def control_panel_data(request):
+    wifi_info = await information.get_wifi_info()
+    hotspot_mode_value = hotspot_control.get_hotspot_mode()
+
+    try:
+        os.stat("saved_connection.txt")
+        saved_connection_exists = True
+        with open("saved_connection.txt", "r") as f:
+            lines = f.read().splitlines()
+        saved_ssid = lines[0] if len(lines) >= 2 else None
+    except OSError:
+        saved_connection_exists = False
+        saved_ssid = None
+
+    ssid_info = { 
+        "hotspot_ssid": wifi_info.get('ssid', 'unknown'),
+        "domain": "tinklink.local",
+        "ip": wifi_info.get('ip', '0.0.0.0'),
+        "hotspot_mode": hotspot_mode_value,
+        "saved_ssid": saved_ssid if saved_connection_exists and saved_ssid else "None"
+    }
+    
+    connected = wifi_info.get('sta_connected', False)
+    sta = {
+         "sta_status": "Connected" if connected else "Not Connected",
+         "sta_ssid": wifi_info.get('sta_ssid', 'N/A') or "N/A",
+         "sta_ip": wifi_info.get('sta_ip', '0.0.0.0')
+    }
+    
+    control_panel_data = {
+        "connected": connected,
+        "ssid_info": ssid_info, 
+        "sta": sta, 
+        "saved_connection_exists": saved_connection_exists
+    }
+
+    return json.dumps(control_panel_data), 200, { "Content-Type": "application/json"}
+
 # Control panel page with dynamic content
 @app.route('/control-panel')
 async def control_panel(request):

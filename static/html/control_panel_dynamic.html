@@ -1,4 +1,3 @@
-{% args hotspot, sta_status, saved, ssid_list %}
 <!DOCTYPE html>
 <html>
   <head>
@@ -9,6 +8,7 @@
     <meta name="viewport" content="width=device-width, initial-scale=1, maximum-scale=2">
     <title>|TinkLink Control Panel|</title>
     <link rel="stylesheet" href="/static/css/style.css">
+    <script src="/static/js/control_panel.js"></script>
     <script>
       document.addEventListener("DOMContentLoaded", function() {
         const forms = document.querySelectorAll("form");
@@ -26,48 +26,10 @@
         document.getElementById("loading-message").style.display = 'none';
       });
 
-      async function populateNetworks() {
-        
-        message = document.getElementById("loading-message");
-        message.style.display = '';
-
-        const request = new Request('/scan_networks');
-
-        fetch(request)
-        .then(response => {
-          if(!response.ok) {
-            throw new Error('Network response error');
-          }
-          return response.json();
-        })
-        .then(data => {
-
-          if (data) {
-            // Data found, remove everything in list.
-            selectList = document.getElementById("network-select");
-            selectList.innerHTML = "";
-            
-            data.forEach(function(ssid) {
-              // Create new option for the SSID
-              let option = document.createElement("option");
-              option.value = ssid;
-              option.text = ssid;
-
-              // Add option to SSID list.
-              selectList.appendChild(option);
-            });
-          }
-        })
-        .catch(error => {
-          console.error("Could not load JSON data");
-        })
-        .finally(() => {
-          message.style.display = 'none';
-        });
-      }
+      
     </script>
   </head>
-  <body oncontextmenu="return false;">
+  <body><!--oncontextmenu="return false;"-->
     <!-- Header -->
     <div class="header-box">
       <h1>Control Panel</h1>
@@ -77,12 +39,13 @@
     <div class="content">
       <!-- Hotspot Section -->
       <div class="info-section" id="hotspot-info">
+        <fieldset>
         <h3>Hotspot</h3>
         <div>
-          Hotspot SSID: {{ hotspot["ssid"] }}<br>
-          Domain Name: {{ hotspot["domain"] }}<br>
-          IP Address: {{ hotspot["ip"] }}<br>
-          Hotspot Mode: {{ hotspot["hotspot_mode"] }}
+          Hotspot SSID: <span id="hotspot_ssid"></span><br>
+          Domain Name: <span id="domain"></span><br>
+          IP Address: <span id="ip"></span><br>
+          Hotspot Mode: <span id="hotspot_mode"></span><br>
         </div>
         <div class="button-group">
           <form method="POST" action="/set_hotspot_mode">
@@ -94,38 +57,42 @@
             <button type="submit">Always On</button>
           </form>
         </div>
+        </fieldset>
       </div>
   
       <!-- Connected Network Section -->
       <div class="info-section" id="sta-info">
+        <fieldset>
         <h3>Connected Network</h3>
-        <div>
-          STA Status: {{ sta_status["connection_status"] }}<br>
-          Connected SSID: {{ sta_status["ssid"] }}<br>
-          IP Address: {{ sta_status["ip"] }}
-        </div>
-        <div class="button-group">
-          {% if sta_status["connected"] %}
-            <form id="disconnect-form" method="POST" action="/disconnect">
-            <button type="submit">Disconnect</button>
-            </form>
-          {% endif %}
-        </div>
+          <div>
+            STA Status: <span id="sta_status"></span><br>
+            Connected SSID: <span id="sta_ssid"></span><br>
+            IP Address: <span id="sta_ip"></span><br>
+          </div>
+          <div class="button-group">
+              <form id="disconnect-form" method="POST" action="/disconnect">
+              <button type="submit">Disconnect</button>
+              </form>
+          </div>
+        </fieldset>
       </div>
   
       <!-- Saved Connection Section -->
       <div class="info-section" id="saved-connection-info">
-        <h3>Saved Connection</h3>
-        <div>
-          Saved Connection: {{ saved["ssid"] }}
-        </div>
-        <div class="button-group">
-        {% if sta_status["connected"] %}
-          <form id="disconnect-form" method="POST" action="/disconnect">
-          <button type="submit">Disconnect</button>
-          </form>
-        {% endif %}
+        <fieldset>
+          <h3>Saved Connection</h3>
+          <div>
+            Saved Connection: <span id="saved_ssid"></span>
+          </div>
+          <div class="button-group">
+            <form id="sta-disconnect-form" method="POST" action="/disconnect">
+            <button type="submit">Disconnect</button>
+            </form>
+          </div>
+        </fieldset>
+      </div>
 
+        <!-- Deal with all of this later
         {% if sta_status["connected"] %}
           {% if saved["connection_exists"] and saved["ssid"] %}
             {% if sta_status["ssid"] == saved["ssid"] %}
@@ -161,7 +128,7 @@
         {% endif %}
         </div>
       </div>
-  
+      -->
       <!-- Connect Form Section -->
       <div class="form-section">
         <h3>Connect to a Network</h3>
@@ -180,6 +147,168 @@
           <button type="submit">Connect</button>
         </form>
       </div>
+
+      <!-- RetroTINK4K Setup-->
+       <div class="form-section">
+       <fieldset>
+        <h3>RetroTINK Setup</h3>
+        <form id="tink-setup">
+          <label for="tx-pin">Transmit Pin</label>
+          <input type="number" id="tx-pin">
+
+          <label for="rx-pin">Receive Pin</label>
+          <input type="number" id="rx-pin">
+
+          <label for="tink-uart">RetroTINK 4K UART</label>
+          <select id="tink-uart">
+            <option value="0">Port 0</option>
+            <option value="1">Port 1</option>
+          </select>
+        </form>
+       </fieldset>
+      </div>
+
+      <!-- TCP Server -->
+      <div class="form-section">
+       <fieldset>
+        <h3>TCP Server</h3>
+        <form id="tcp-server">
+          <label for="tcp-server-enabled">Enabled:</label>
+          <select id="tcp-server-enabled">
+            <option value="true">Yes</option>
+            <option value="false">No</option>
+          </select>
+          
+          <label for="tcp-server-port">Port:</label>
+          <input type="number" id="tcp-server-port">
+        </form>
+       </fieldset>
+       </div>
+
+       <!-- Switches/Matrices -->
+       <div class="form-section">
+        <fieldset>
+          <h3>Switch/Matrix Configuration</h3>
+
+          <h4>Extron SW VGA</h4>
+          <form id="extron-sw-vga">
+            <label for="extron-sw-vga-enabled">Enabled:</label>
+            <select id="extron-sw-vga-enabled">
+              <option value="true">Yes</option>
+              <option value="false">No</option>
+            </select>
+
+            <label for="extron-type">Type:</label>
+            <select id="extron-type">
+              <option value="sw-vga">Extron SW VGA</option>
+              <option value="sw-cp">Extron MAV/CrossPoint</option>
+            </select>
+
+            <label for="extron-name">Name:</label>
+            <input type="text" id="extron-name">
+
+            <label for="extron-connection">Connection Type:</label>
+            <select id="extron-connection">
+              <option value="serial">Serial Connection</option>
+              <option value="telnet">Telnet</option>
+            </select>
+
+            <!-- should we go down to H5? -->
+            <h5>Serial Configuration</h5>
+            <label for="extron-tx-pin">Transmit Pin</label>
+            <input id="extron-tx-pin" type="number">
+  
+            <label for="extron-rx-pin">Receive Pin</label>
+            <input id="extron-rx-pin" type="number">
+
+            <label for="extron-uart">Extron UART</label>
+            <select id="extron-uart">
+              <option value="0">Port 0</option>
+              <option value="1">Port 1</option>
+            </select>
+
+            <h5>Triggers</h5>
+
+            <h6>Trigger 1</h6>
+            <div class="trigger">
+              <label for="trigger-1-name">Name:</label>
+              <input type="text" for="trigger-1-name">
+
+              <label for="trigger-1-input">Input:</label>
+              <select id="trigger-1-input">
+                <option value="1">Input 1</option>
+                <option value="2">Input 2</option>
+                <option value="3">Input 3</option>
+                <option value="4">Input 4</option>
+                <option value="5">Input 5</option>
+                <option value="6">Input 6</option>
+              </select>
+
+              <label for="trigger-1-mode">Mode:</label>
+              <select id="trigger-1-mode">
+                <option value="Remote">Remote</option>
+                <option value="SVS">SVS</option>
+              </select>
+
+              <label for="trigger-1-profile">RetroTINK Profile #:</label>
+              <select id="trigger-1-profile">
+                <option value="1">RetroTink Profile 1</option>
+                <option value="2">RetroTink Profile 2</option>
+                <option value="3">RetroTink Profile 3</option>
+                <option value="4">RetroTink Profile 4</option>
+                <option value="5">RetroTink Profile 5</option>
+                <option value="6">RetroTink Profile 6</option>
+                <option value="7">RetroTink Profile 7</option>
+                <option value="8">RetroTink Profile 8</option>
+                <option value="9">RetroTink Profile 9</option>
+                <option value="10">RetroTink Profile 10</option>
+                <option value="11">RetroTink Profile 11</option>
+                <option value="12">RetroTink Profile 12</option>
+              </div>
+              <!--
+              <h6>Trigger 2</h6>
+              
+              <div class="trigger">
+
+                <label for="trigger-2-name">Name:</label>
+                <input type="text" for="trigger-2-name">
+    
+                <label for="trigger-2-input">Input:</label>
+                <select id="trigger-2-input">
+                  <option value="1">Input 1</option>
+                  <option value="2">Input 2</option>
+                  <option value="3">Input 3</option>
+                  <option value="4">Input 4</option>
+                  <option value="5">Input 5</option>
+                  <option value="6">Input 6</option>
+                </select>
+    
+                <label for="trigger-2-mode">Mode:</label>
+                <select id="trigger-2-mode">
+                  <option value="Remote">Remote</option>
+                  <option value="SVS">SVS</option>
+                </select>
+    
+                <label for="trigger-2-profile">RetroTINK Profile #:</label>
+                <select id="trigger-2-profile">
+                  <option value="1">RetroTink Profile 1</option>
+                  <option value="2">RetroTink Profile 2</option>
+                  <option value="3">RetroTink Profile 3</option>
+                  <option value="4">RetroTink Profile 4</option>
+                  <option value="5">RetroTink Profile 5</option>
+                  <option value="6">RetroTink Profile 6</option>
+                  <option value="7">RetroTink Profile 7</option>
+                  <option value="8">RetroTink Profile 8</option>
+                  <option value="9">RetroTink Profile 9</option>
+                  <option value="10">RetroTink Profile 10</option>
+                  <option value="11">RetroTink Profile 11</option>
+                  <option value="12">RetroTink Profile 12</option>
+              </select>
+            </div>
+          -->
+          </form>
+        </fieldset>
+       </div>
     </div>
         
     <!-- Footer -->
