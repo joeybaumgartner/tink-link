@@ -36,10 +36,7 @@ class BaseUart:
         if not self.is_open:
             self.open()
         self.running = True
-
-        getPubSub().subscribe(Topics.REMOTE_MESSAGE, self._on_pubsub_message, self.pubsub_origin)
-        getPubSub().subscribe(Topics.TCP_MESSAGE, self._on_pubsub_message, self.pubsub_origin)
-        getPubSub().subscribe(Topics.TERMINAL_MESSAGE, self._on_pubsub_message, self.pubsub_origin)
+        getPubSub().subscribe("/*", self._on_pubsub_message, self.pubsub_origin)
 
 
     async def _on_pubsub_message(self, payload: str, topic: str, origin: Origin):
@@ -47,6 +44,7 @@ class BaseUart:
         try:
             if(payload.find(prefix) == 0):
                 message = payload[len(prefix):]
+                message = message + "\r\n"
                 self.write(message)
                 print(f"tx: {origin.name}: [{message.strip()}]. rx: {self.pubsub_origin.name}")
         except Exception as e:
@@ -67,10 +65,7 @@ class BaseUart:
         Requests the uart to end and waits until it does. 
         """
         self.running = False
-        getPubSub().unsubscribe(Topics.REMOTE_MESSAGE, self._on_pubsub_message)
-        getPubSub().unsubscribe(Topics.TCP_MESSAGE, self._on_pubsub_message)
-        getPubSub().unsubscribe(Topics.TERMINAL_MESSAGE, self._on_pubsub_message)
-
+        getPubSub().unsubscribe("/*", self._on_pubsub_message)
 
 
 class HwUart(BaseUart):
@@ -79,8 +74,6 @@ class HwUart(BaseUart):
         super().__init__(uart_id, tx_pin, rx_pin, encoding, baud)
         self.uart = None
 
-        self._rx_buffer = micropython.RingIO(512)
-        self._tmp_buf = bytearray(64)  # temp buffer for readinto
         self._line_buffer = bytearray()
         self._flag = asyncio.ThreadSafeFlag()
         self._uart_task = None
@@ -98,19 +91,7 @@ class HwUart(BaseUart):
 
 
     def _irq_handler(self, uart):
-        micropython.schedule(self._on_uart_data, 0)
-
-
-    def _on_uart_data(self, _):
-        try:
-            while True:
-                n = self.uart.readinto(self._tmp_buf)
-                if n is None or n == 0:
-                    break
-                self._rx_buffer.write(self._tmp_buf)#[:n])
-            self._flag.set()
-        except Exception as e:
-            print("IRQ error:", e)
+        self._flag.set()
 
 
     def close(self):
@@ -134,16 +115,18 @@ class HwUart(BaseUart):
         try:
             while self.running:
                 await self._flag.wait()
-                while self._rx_buffer.any():
-                    bytes = self._rx_buffer.read(1)
+                while self.uart.any():
+                    bytes = self.uart.read(1)
                     if bytes:
                         char = bytes[0]
                         self._line_buffer.append(char)
                         if char == 10: # ASCII '\n'
                             try:
-                                msg = self._line_buffer.decode(self.encoding).strip() + '\r\n'
+                                line = self._line_buffer.decode(self.encoding).strip()
+                                print("UART received line:", line)
+                                msg = line + '\r\n'
                                 self._line_buffer = bytearray() # reset buffer
-                                print("UART received:", msg)
+                                print("UART received msg:", msg)
                                 getPubSub().publish(Topics.UART_MESSAGE, msg, self.pubsub_origin)
                             except Exception as e:
                                 print("Decode error:", e)
@@ -155,6 +138,7 @@ class HwUart(BaseUart):
 
 
     def _write_impl(self, message):
+        print("HwUart write impl:", message)
         data = message.encode(self.encoding)
         self.uart.write(data)
         self.uart.flush()
@@ -210,7 +194,7 @@ class RmtUart(BaseUart):
 
     def _write_impl(self, message):
         # print("start rmt write impl. Message: " + message + " len: " + str(len(message)))
-
+        print("RmtUart write impl:", message)
         data = message.encode(self.encoding)
         
         for byte in data:

@@ -1,18 +1,17 @@
 import uasyncio as asyncio
 from pubsub import getPubSub, PubSub, Topics, Origin
-from uart_async import BaseUart
+from uart_async import BaseUart, HwUart
 
 
-class SwitcherState:
-    def __init__(self, activeInput, activeOutput):
+class ExtronSwVgaState:
+    def __init__(self, activeInput: int = 0):
         self.activeInput = activeInput
-        self.activeOutput = activeOutput
 
     def clone(self):
-        return SwitcherState(self.activeInput, self.activeOutput)
+        return ExtronSwVgaState(self.activeInput)
     
     def __repr__(self):
-        return f"SwitcherState(activeInput={self.activeInput}, activeOutput={self.activeOutput})"
+        return f"ExtronSwVgaState(activeInput={self.activeInput})"
 
 
 class Line:
@@ -41,9 +40,20 @@ class Line:
 
 class ExtronSwVga:
     def __init__(self, uart: BaseUart):
-        self.state = SwitcherState(None, 0)
+        self.state = ExtronSwVgaState()
         self.pubsub_origin = PubSub.create_origin("ExtronSwVga")
         self.uart = uart
+
+
+    @classmethod
+    def create_from_config(cls, config: dict):
+        conn = config.get("connection", {})
+        uart = HwUart(conn.get("uartId", 1), conn.get("txPin", 21), conn.get("rxPin", 20))
+        uart.start()
+        extron = ExtronSwVga(uart)
+        extron.subscribe()
+        return extron
+
 
     async def _on_message(self, payload: str, topic: str, origin: Origin):
         line = Line(payload)
