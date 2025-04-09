@@ -31,7 +31,7 @@ class Line:
 
     def get_input(self) -> int:
         if self.is_preset():
-            # Designed to work for lines with one input char eg "In3 All" or with two input chars eg "In10 All"
+            # Designed to work for lines that end as RprXX
             return int(self.line[3:5])
         else:
             return -1 # not en error

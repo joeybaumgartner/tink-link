@@ -153,12 +153,15 @@ async def main():
 
     web_server.start_web_server() # includes remote and terminal websockets
 
-    tel_config = get_telnet_config("telnet_config.json") #moved to config.json - this code can be removed
-    if tel_config:
-        telnet = telnet_async.TelnetConnection(config["hostname"], config["port"], config["username"], config["password"], config["init_string"])
-        telnet.start()
-        extroncp = ExtronMavCp(telnet)
-        extroncp.subscribe()
+    if config:
+        try:
+            telnet = telnet_async.TelnetConnection(config["hostname"], config["port"], config["username"], config["password"], config["init_string"])
+            await telnet.start()
+
+            extroncp = ExtronMavCrosspoint(telnet)
+            extroncp.subscribe()
+        except OSError as oe:
+            print(f"Could not connect to telnet server: {oe}")
 
     tcpConfig = config.get("tcpServer", {})
     if tcpConfig.get("enabled", False):
