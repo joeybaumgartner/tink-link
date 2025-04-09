@@ -197,11 +197,9 @@ class RmtUart(BaseUart):
 
     def _write_impl(self, message):
         # print("start rmt write impl. Message: " + message + " len: " + str(len(message)))
-        print("RmtUart write impl:", message)
         data = message.encode(self.encoding)
-        
+        print("RmtUart write impl:", data)
         for byte in data:
-            print("byte")
             pulses = [self._duration]  # start bit, low because write_pulses starts low
             state = 0
             # create data bits
@@ -220,6 +218,5 @@ class RmtUart(BaseUart):
                 pulses.append(self._duration * self.num_stop)
             self._rmt.write_pulses(pulses, 0) # start low 
             self._rmt.wait_done(timeout = math.ceil(self._total_tx_time_ms) + 1) # 1ms extra since this is just a timout
-        print("end rmt write impl")
 
 
