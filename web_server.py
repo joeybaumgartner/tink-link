@@ -143,10 +143,9 @@ async def ws_terminal(request, ws):
             if msg is None:
                 print("Terminal WebSocket connection closed by client")
                 break
-            # Send command with CR+LF without the "remote" prefix
-            full_command = msg + "\r\n"
-            print("Broadcasting terminal command:", full_command)
-            getPubSub().publish(Topics.TERMINAL_MESSAGE, full_command, pubsub_terminal_origin)
+            # Terminal javascript code appends "\r\n" to the message, so no need to add it here
+            print("Broadcasting terminal command:", msg)
+            getPubSub().publish(Topics.TERMINAL_MESSAGE, msg, pubsub_terminal_origin)
             
     finally:
         terminal_websockets.remove(ws)

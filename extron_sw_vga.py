@@ -4,14 +4,15 @@ from uart_async import BaseUart, HwUart
 
 
 class ExtronSwVgaState:
-    def __init__(self, activeInput: int = 0):
+    def __init__(self, profile: int = None, activeInput: int = 0):
         self.activeInput = activeInput
+        self.profile = profile
 
     def clone(self):
-        return ExtronSwVgaState(self.activeInput)
+        return ExtronSwVgaState(self.profile, self.activeInput)
     
     def __repr__(self):
-        return f"ExtronSwVgaState(activeInput={self.activeInput})"
+        return f"ExtronSwVgaState(profile={self.profile},activeInput={self.activeInput})"
 
 
 class Line:
@@ -49,9 +50,8 @@ class ExtronSwVga:
     def create_from_config(cls, config: dict):
         conn = config.get("connection", {})
         uart = HwUart(conn.get("uartId", 1), conn.get("txPin", 21), conn.get("rxPin", 20))
-        uart.start()
         extron = ExtronSwVga(uart)
-        extron.subscribe()
+        extron.start()
         return extron
 
 
@@ -63,5 +63,6 @@ class ExtronSwVga:
             print("Extron state change published: ", self.state)
             getPubSub().publish(Topics.SWITCHER_STATECHANGED, self.state.clone(), self.pubsub_origin)
 
-    def subscribe(self):
+    def start(self):
+        self.uart.start()
         getPubSub().subscribe(Topics.UART_MESSAGE, self._on_message, self.pubsub_origin)

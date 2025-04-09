@@ -45,7 +45,7 @@
             "profle": 2
         }]
     },{
-        "enabled": false,
+        "enabled": true,
         "type": "ExtronSwVga",
         "name": "Extron SW VGA",
         "connection": {
