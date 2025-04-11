@@ -93,14 +93,12 @@ async def ws_endpoint(request, ws):
             if msg is None:
                 print("WebSocket connection closed by client")
                 break
+            elif msg == "pwr":
+                full_command = "pwr on\r\n"
             else:
                 full_command = "remote " + msg + "\r\n"
-                print("Broadcasting command:", full_command)
-                getPubSub().publish(Topics.REMOTE_MESSAGE, full_command, pubsub_remote_origin)
-            if msg == "pwr":
-                full_command = "pwr on\r\n"
-                print("Broadcasting command:", "pwr on")
-                getPubSub().publish(Topics.REMOTE_MESSAGE, full_command, pubsub_remote_origin)
+
+            getPubSub().publish(Topics.REMOTE_MESSAGE, full_command, pubsub_remote_origin)
     finally:
         remote_websockets.remove(ws)
         print("WebSocket client removed")

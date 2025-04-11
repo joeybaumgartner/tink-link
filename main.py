@@ -132,6 +132,7 @@ async def main():
 
     tink_conf = config.get("tink", {})
     tink = Retrotink.create_from_config(tink_conf)
+    tink.start()
 
     # Switcher Support
 
