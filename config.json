@@ -1,5 +1,5 @@
 {
-    "tink": {
+    "tink": {   
         "txPin": 1,
         "rxPin": 0,
         "uartId": 0

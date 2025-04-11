@@ -25,9 +25,7 @@ class Retrotink:
     @classmethod
     def create_from_config(cls, config: dict):
         uart = RmtUart(config.get("uartId", 0), config.get("txPin", 1), config.get("rxPin", 0))
-        uart.start()
         tink = Retrotink(uart)
-        tink.subscribe()
         return tink
     
 
@@ -43,5 +41,18 @@ class Retrotink:
             self.uart.writeLine(msg)
 
 
-    def subscribe(self):
+    async def _on_remote_message(self, payload:str, topic, origin: Origin):
+        print("Retrotink received remote command:", payload)
+        self.uart.writeLine(payload)
+
+
+    def start(self):
+        self.uart.start()
         getPubSub().subscribe(Topics.SWITCHER_TRIGGERCHANGED, self._on_switch_statechange, self.pubsub_origin)
+        getPubSub().subscribe(Topics.REMOTE_MESSAGE, self._on_remote_message, self.pubsub_origin)
+
+    def stop(self):
+        self.uart.stop()
+        getPubSub().subscribe(Topics.SWITCHER_TRIGGERCHANGED, self._on_switch_statechange, self.pubsub_origin)
+        getPubSub().subscribe(Topics.REMOTE_MESSAGE, self._on_remote_message, self.pubsub_origin)
+
