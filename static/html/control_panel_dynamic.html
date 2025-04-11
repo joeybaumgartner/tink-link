@@ -51,8 +51,8 @@
           <form method="POST" action="/set_hotspot_mode">
             <input type="hidden" name="mode" value="5-minute_time_out">
             <button type="submit">5-Minute Time-Out</button>
-          </form>
-          <form method="POST" action="/set_hotspot_mode">
+          <!--/form>
+          <form method="POST" action="/set_hotspot_mode"-->
             <input type="hidden" name="mode" value="always_on">
             <button type="submit">Always On</button>
           </form>
@@ -131,6 +131,7 @@
       -->
       <!-- Connect Form Section -->
       <div class="form-section">
+        <fieldset>
         <h3>Connect to a Network</h3>
 
         <p id="loading-message">Loading available networks, please wait...</p>
@@ -146,20 +147,23 @@
           <input type="password" id="network-password" name="password" placeholder="Enter password">
           <button type="submit">Connect</button>
         </form>
+        </fieldset>
       </div>
 
       <!-- RetroTINK4K Setup-->
        <div class="form-section">
        <fieldset>
         <h3>RetroTINK Setup</h3>
-        <form id="tink-setup">
-          <label for="tx-pin">Transmit Pin</label>
-          <input type="number" id="tx-pin">
-
-          <label for="rx-pin">Receive Pin</label>
-          <input type="number" id="rx-pin">
-
+        <div class="serial">
+          <label for="tink-tx-pin">Transmit Pin</label>
+          <label for="tink-rx-pin">Receive Pin</label>
           <label for="tink-uart">RetroTINK 4K UART</label>
+        </div>
+        <form id="tink-setup" class="form-section serial">
+          
+          <input type="number" id="tink-tx-pin" min="0" max="8">
+          <input type="number" id="tink-rx-pin" min="0" max="8">
+          
           <select id="tink-uart">
             <option value="0">Port 0</option>
             <option value="1">Port 1</option>
@@ -169,18 +173,21 @@
       </div>
 
       <!-- TCP Server -->
-      <div class="form-section">
+      <div id="tcp-server" class="form-section">
        <fieldset>
         <h3>TCP Server</h3>
-        <form id="tcp-server">
+        <div class="tcp-server">
           <label for="tcp-server-enabled">Enabled:</label>
-          <select id="tcp-server-enabled">
-            <option value="true">Yes</option>
-            <option value="false">No</option>
+          <label for="tcp-server-port">Port:</label>
+        </div>
+        <form id="tcp-server" class="tcp-server">
+          
+          <select id="tcp-server-enabled" onclick="toggle()">
+            <option value=true>Yes</option>
+            <option value=false>No</option>
           </select>
           
-          <label for="tcp-server-port">Port:</label>
-          <input type="number" id="tcp-server-port">
+          <input type="number" id="tcp-server-port" min="1" max="65535" value="1023">
         </form>
        </fieldset>
        </div>
@@ -191,50 +198,87 @@
           <h3>Switch/Matrix Configuration</h3>
 
           <h4>Extron SW VGA</h4>
-          <form id="extron-sw-vga">
-            <label for="extron-sw-vga-enabled">Enabled:</label>
+          <div class="switcher">
+            <label for="extron-sw-vga-enabled">Enabled</label>
+            <label for="extron-type">Type</label>
+            <label for="extron-name">Name</label>
+            <label for="extron-connection">Connection</label>
+          </div>
+          <form id="extron-sw-vga" class="switcher">
+            
             <select id="extron-sw-vga-enabled">
               <option value="true">Yes</option>
               <option value="false">No</option>
             </select>
-
-            <label for="extron-type">Type:</label>
+            
             <select id="extron-type">
-              <option value="sw-vga">Extron SW VGA</option>
-              <option value="sw-cp">Extron MAV/CrossPoint</option>
+              <option value="sw-vga">SW VGA</option>
+              <option value="sw-cp">MAV/CrossPoint</option>
             </select>
-
-            <label for="extron-name">Name:</label>
+            
             <input type="text" id="extron-name">
 
-            <label for="extron-connection">Connection Type:</label>
-            <select id="extron-connection">
-              <option value="serial">Serial Connection</option>
+            <select id="extron-connection" onclick="toggleSerialTelnet()">
+              <option value="serial">Serial</option>
               <option value="telnet">Telnet</option>
             </select>
+          </form>
 
+          <div id="extron-serial">
             <!-- should we go down to H5? -->
             <h5>Serial Configuration</h5>
-            <label for="extron-tx-pin">Transmit Pin</label>
-            <input id="extron-tx-pin" type="number">
-  
-            <label for="extron-rx-pin">Receive Pin</label>
-            <input id="extron-rx-pin" type="number">
+              <div class="serial">
+                <label for="extron-tx-pin">Transmit Pin</label>
+                <label for="extron-rx-pin">Receive Pin</label>
+                <label for="extron-uart">Extron UART</label>
+              </div>
+              <div class="serial">
+                
+                <input id="extron-tx-pin" type="number" min="0" max="8">
+                <input id="extron-rx-pin" type="number" min="0" max="8">
+                <select id="extron-uart">
+                  <option value="0">Port 0</option>
+                  <option value="1">Port 1</option>
+                </select>
+              </div>
+            </div>
 
-            <label for="extron-uart">Extron UART</label>
-            <select id="extron-uart">
-              <option value="0">Port 0</option>
-              <option value="1">Port 1</option>
-            </select>
+            <div id="extron-telnet">
+              <h5>Telnet Connection</h5>
+              <div class="telnet">
+                <label for="telnet-hostname">Hostname</label>
+                <label for="telnet-port">Port</label>
+                <label for="telnet-username">Username</label>
+                <label for="telnet-password">Password</label>
+                <lable for="telnet-init-string">Init String</lable>
+              </div>
+              <div class="telnet">
+                <input id="telnet-hostname" type="text" placeholder="192.168.0.255">
+                <input id="telnet-port" type="number" min="1" max="65535" value="23">
+                <input id="telnet-username" type="text">
+                <input id="telnet-password" type="text">
+                <input id="telnet-init-string" type="text">
+              </div>
+            </div>
+          </fieldset>
 
-            <h5>Triggers</h5>
+          <fieldset>
+            <h3>Triggers</h3>
 
-            <h6>Trigger 1</h6>
+            <button id="add-trigger" onclick="addTrigger('triggers')">Add</button>
+
             <div class="trigger">
-              <label for="trigger-1-name">Name:</label>
+              <label for="trigger-1-name">Name</label>
+              <label for="trigger-1-input">Input</label>
+              <label for="trigger-1-mode">Mode</label>
+              <label for="trigger-1-profile">RT Profile</label>
+            </div>
+
+            <div id="triggers" class="trigger">
+              <input type="hidden" class="trigger-count">
+
               <input type="text" for="trigger-1-name">
 
-              <label for="trigger-1-input">Input:</label>
               <select id="trigger-1-input">
                 <option value="1">Input 1</option>
                 <option value="2">Input 2</option>
@@ -244,68 +288,28 @@
                 <option value="6">Input 6</option>
               </select>
 
-              <label for="trigger-1-mode">Mode:</label>
               <select id="trigger-1-mode">
                 <option value="Remote">Remote</option>
                 <option value="SVS">SVS</option>
               </select>
 
-              <label for="trigger-1-profile">RetroTINK Profile #:</label>
               <select id="trigger-1-profile">
-                <option value="1">RetroTink Profile 1</option>
-                <option value="2">RetroTink Profile 2</option>
-                <option value="3">RetroTink Profile 3</option>
-                <option value="4">RetroTink Profile 4</option>
-                <option value="5">RetroTink Profile 5</option>
-                <option value="6">RetroTink Profile 6</option>
-                <option value="7">RetroTink Profile 7</option>
-                <option value="8">RetroTink Profile 8</option>
-                <option value="9">RetroTink Profile 9</option>
-                <option value="10">RetroTink Profile 10</option>
-                <option value="11">RetroTink Profile 11</option>
-                <option value="12">RetroTink Profile 12</option>
+                <option value="1">Profile 1</option>
+                <option value="2">Profile 2</option>
+                <option value="3">Profile 3</option>
+                <option value="4">Profile 4</option>
+                <option value="5">Profile 5</option>
+                <option value="6">Profile 6</option>
+                <option value="7">Profile 7</option>
+                <option value="8">Profile 8</option>
+                <option value="9">Profile 9</option>
+                <option value="10">Profile 10</option>
+                <option value="11">Profile 11</option>
+                <option value="12">Profile 12</option>
               </div>
-              <!--
-              <h6>Trigger 2</h6>
               
-              <div class="trigger">
-
-                <label for="trigger-2-name">Name:</label>
-                <input type="text" for="trigger-2-name">
-    
-                <label for="trigger-2-input">Input:</label>
-                <select id="trigger-2-input">
-                  <option value="1">Input 1</option>
-                  <option value="2">Input 2</option>
-                  <option value="3">Input 3</option>
-                  <option value="4">Input 4</option>
-                  <option value="5">Input 5</option>
-                  <option value="6">Input 6</option>
-                </select>
-    
-                <label for="trigger-2-mode">Mode:</label>
-                <select id="trigger-2-mode">
-                  <option value="Remote">Remote</option>
-                  <option value="SVS">SVS</option>
-                </select>
-    
-                <label for="trigger-2-profile">RetroTINK Profile #:</label>
-                <select id="trigger-2-profile">
-                  <option value="1">RetroTink Profile 1</option>
-                  <option value="2">RetroTink Profile 2</option>
-                  <option value="3">RetroTink Profile 3</option>
-                  <option value="4">RetroTink Profile 4</option>
-                  <option value="5">RetroTink Profile 5</option>
-                  <option value="6">RetroTink Profile 6</option>
-                  <option value="7">RetroTink Profile 7</option>
-                  <option value="8">RetroTink Profile 8</option>
-                  <option value="9">RetroTink Profile 9</option>
-                  <option value="10">RetroTink Profile 10</option>
-                  <option value="11">RetroTink Profile 11</option>
-                  <option value="12">RetroTink Profile 12</option>
-              </select>
             </div>
-          -->
+          
           </form>
         </fieldset>
        </div>
