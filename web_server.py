@@ -8,54 +8,133 @@ import network
 import os
 from pubsub import getPubSub, PubSub, Topics, Origin
 
+WEB_ROOT = "/static"
+STREAM_THRESHOLD = 1024  # 1 KB
+
 app = Microdot()
 
 def load_status_template():
     """Load the status response template."""
     try:
-        with open("/static/html/status_response.html", "r") as f:
+        with open(WEB_ROOT + "/html/status_response.html", "r") as f:
             return f.read()
     except OSError:
         return None
+
 
 @app.get('/')
 async def index(request):
     return Response(status_code=302, headers={'Location': '/remote-page'})
 
-# Handler for all static content (CSS, JS, HTML, images, etc.)
-# Images are handled in 1K chunks
-@app.route('/static/<path:path>')
-async def static(request, path):
+
+temp_buf = None
+def stream_file(path):
+    global temp_buf
+    if temp_buf == None:
+        temp_buf = bytearray(STREAM_THRESHOLD)
+    try:
+        with open(path, 'rb') as f:
+            while True:
+                numBytes = f.readinto(temp_buf, STREAM_THRESHOLD)
+                if not numBytes:
+                    break
+                yield temp_buf
+    except OSError:
+        # Not really sure what else to do here
+        yield b'Error reading file'
+
+
+def guess_mime_type(filename):
+    if filename.endswith('.html'):
+        return 'text/html'
+    if filename.endswith('.css'):
+        return 'text/css'
+    if filename.endswith('.js'):
+        return 'application/javascript'
+    if filename.endswith('.json'):
+        return 'application/json'
+    if filename.endswith('.svg'):
+        return 'image/svg+xml'
+    if filename.endswith('.png'):
+        return 'image/png'
+    if filename.endswith('.jpg') or filename.endswith('.jpeg'):
+        return 'image/jpeg'
+    if filename.endswith('.gif'):
+        return 'image/gif'
+    return 'application/octet-stream'
+
+
+def is_file(path):
+    try:
+        return (os.stat(path)[0] & 0o170000) == 0o100000  # regular file
+    except OSError:
+        return False
+    
+
+def get_size(path):
+    try:
+        return os.stat(path)[6]
+    except OSError:
+        return 0
+
+
+def serve_static_file(request, path):
     if '..' in path:
         # directory traversal is not allowed
-        return 'Not found', 404
-    if(path == "images"):
-        try:
-            def file_iterator():
-                with open(path, 'rb') as f:
-                    while True:
-                        chunk = f.read(1024)
-                        if not chunk:
-                            break
-                        yield chunk
+        return "Bad Request", 400
 
-            return Response(file_iterator(), headers={'Content-Type': 'image/png'})
-        except OSError:
-            return Response(f"{path} not found", status_code=404)
-    else:
-        return send_file('static/' + path, max_age=1)
+    base_path = WEB_ROOT + '/' + path
+    gz_path = base_path + '.gz'
+
+    # Prefer .gz version if it exists
+    try:
+        if is_file(gz_path):
+            
+            if get_size(gz_path) > STREAM_THRESHOLD:
+                mime = guess_mime_type(base_path)
+                return Response(
+                    stream_file(gz_path), 
+                    headers = {
+                        'Content-Type': mime, 
+                        'Content-Encoding': "gzip"
+                    }
+                )
+            return send_file(gz_path, compressed=True, max_age=1)
+        
+        # Fallback to uncompressed version
+        if get_size(base_path):
+            if get_size(base_path) > STREAM_THRESHOLD:
+                mime = guess_mime_type(base_path)
+                return Response(
+                    stream_file(base_path), 
+                    headers = {'Content-Type': mime}
+                )
+            return send_file(base_path, max_age=1)
+    except Exception as e:
+        print("unexpected error in serve_web_file", e)
+
+    return 'Not found', 404
+
+
+@app.route(WEB_ROOT + '/<path:path>')
+def web_root(request, path):
+    return serve_static_file(request, path)
+
 
 @app.route('/generate_204')
 async def generate_204(request):
     return Response('', status_code=302, headers={'Location': 'http://10.0.0.1/'})
 
+
 @app.route('/ncsi.txt')
 async def ncsi_txt(request):
     return Response('No Connectivity', headers={'Content-Type': 'text/plain'})
 
+
 @app.route('/hotspot-detect.html')
 async def hotspot_detect(request):
     return Response("<html><body>Redirecting</body></html>", status_code=302, headers={'Location': '/control-panel'})
+
 
 @app.route('/library/test/success.html')
 async def apple_success(request):
@@ -104,12 +183,14 @@ async def ws_endpoint(request, ws):
         print("WebSocket client removed")
 
 @app.get('/remote-page')
-async def remote_page(request):
-    return send_file('/static/html/remote.html')
+def remote_page(request):
+    # not prefexing with WEB_ROOT is intentional to satisfy requirements of serve_web_file
+    return serve_static_file(request, 'html/remote.html')
 
 @app.get('/terminal')
-async def terminal_page(request):
-    return send_file('/static/html/terminal.html')
+def terminal_page(request):
+    # not prefexing with WEB_ROOT is intentional to satisfy requirements of serve_web_file
+    return serve_static_file(request, 'html/terminal.html')
 
 # Terminal WebSocket endpoint for serial commands (no "remote" prefix)
 
@@ -153,7 +234,7 @@ async def ws_terminal(request, ws):
 @app.route('/control-panel')
 async def control_panel(request):
     try:
-        with open('/static/html/control_panel.html', 'r') as f:
+        with open(WEB_ROOT + '/html/control_panel.html', 'r') as f:
             html = f.read()
         wifi_info = await information.get_wifi_info()
         #available = wifi_info.get('available_networks', [])
@@ -436,5 +517,5 @@ def start_web_server():
     getPubSub().subscribe("/*", _on_message_terminal, pubsub_terminal_origin)
 
     # Start both the web server and the UART loopback reader concurrently.
-    server_task = asyncio.create_task(app.start_server(host='0.0.0.0', port=80))
+    server_task = asyncio.create_task(app.start_server(host='0.0.0.0', port=80))#, debug=True))
     return server_task
