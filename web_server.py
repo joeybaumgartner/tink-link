@@ -7,11 +7,12 @@ import information
 import network
 import os
 from pubsub import getPubSub, PubSub, Topics, Origin
-from utils import  Utils, CONFIG_FILE
+from utils import Utils, CONFIG_FILE
 
 WEB_ROOT = "/static"
 STREAM_THRESHOLD = 1024  # 1 KB
 
+utils = Utils()
 app = Microdot()
 
 def load_status_template():
@@ -189,6 +190,11 @@ def terminal_page(request):
     # not prefexing with WEB_ROOT is intentional to satisfy requirements of serve_web_file
     return serve_static_file(request, 'html/terminal.html')
 
+@app.get('/control-panel')
+def control_panel(request):
+    # not prefexing with WEB_ROOT is intentional to satisfy requirements of serve_web_file
+    return serve_static_file(request, 'html/control_panel.html')
+
 # Terminal WebSocket endpoint for serial commands (no "remote" prefix)
 
 pubsub_terminal_origin = None
@@ -263,99 +269,6 @@ async def control_panel_data(request):
     }
 
     return json.dumps(control_panel_data), 200, { "Content-Type": "application/json"}
-
-# Control panel page with dynamic content
-@app.route('/control-panel')
-async def control_panel(request):
-    try:
-        with open(WEB_ROOT + '/html/control_panel.html', 'r') as f:
-            html = f.read()
-        wifi_info = await information.get_wifi_info()
-        #available = wifi_info.get('available_networks', [])
-        #options_list = [f'<option value="{ssid}">{ssid}</option>' for ssid in available]
-        #if not options_list:
-        #    options_list = ['<option value="">Please press "Scan For Networks" to populate this list.</option>']
-        #options = "\n".join(options_list)
-        hotspot_mode_value = hotspot_control.get_hotspot_mode()
-        #html = html.replace('{{NETWORK_OPTIONS}}', options)
-        html = html.replace('{{SSID}}', wifi_info.get('ssid', 'Unknown'))
-        html = html.replace('{{DOMAIN}}', 'tinklink.local')
-        html = html.replace('{{IP}}', wifi_info.get('ip', '0.0.0.0'))
-        html = html.replace('{{HOTSPOT_MODE}}', hotspot_mode_value)
-        sta_connected = wifi_info.get('sta_connected', False)
-        sta_status = "Connected" if sta_connected else "Not Connected"
-        sta_ssid = wifi_info.get('sta_ssid', 'N/A') or "N/A"
-        sta_ip = wifi_info.get('sta_ip', '0.0.0.0')
-        html = html.replace('{{STA_STATUS}}', sta_status)
-        html = html.replace('{{STA_SSID}}', sta_ssid)
-        html = html.replace('{{STA_IP}}', sta_ip)
-        try:
-            os.stat("saved_connection.txt")
-            saved_connection_exists = True
-            with open("saved_connection.txt", "r") as f:
-                lines = f.read().splitlines()
-            saved_ssid = lines[0] if len(lines) >= 2 else None
-        except OSError:
-            saved_connection_exists = False
-            saved_ssid = None
-        saved_connection_display = f"Saved Connection: {saved_ssid}" if saved_connection_exists and saved_ssid else "Saved Connection: None"
-        html = html.replace('{{SAVED_CONNECTION}}', saved_connection_display)
-        connected_buttons = ""
-        if sta_connected:
-            connected_buttons = (
-                '<form id="disconnect-form" method="POST" action="/disconnect">'
-                '<button type="submit">Disconnect</button>'
-                '</form>'
-            )
-        html = html.replace('{{DISCONNECT_BUTTON}}', connected_buttons)
-        saved_buttons = ""
-        if sta_connected:
-            if saved_connection_exists and saved_ssid:
-                if sta_ssid == saved_ssid:
-                    saved_buttons = (
-                        '<form id="delete-connection-form" method="POST" action="/delete_connection">'
-                        '<button type="submit">Delete Saved Connection</button>'
-                        '</form>'
-                    )
-                else:
-                    saved_buttons = (
-                        '<form id="overwrite-connection-form" method="POST" action="/save_connection">'
-                        f'<input type="hidden" name="network" value="{sta_ssid}">'
-                        '<input type="hidden" name="password" value="">'
-                        '<button type="submit">Overwrite Saved Connection</button>'
-                        '</form>'
-                    )
-                    saved_buttons += (
-                        '<form id="delete-connection-form" method="POST" action="/delete_connection">'
-                        '<button type="submit">Delete Saved Connection</button>'
-                        '</form>'
-                    )
-            else:
-                global last_valid_password
-                password_field = f'<input type="hidden" name="password" value="{last_valid_password if last_valid_password else ""}">'
-                saved_buttons = (
-                    '<form id="save-connection-form" method="POST" action="/save_connection">'
-                    f'<input type="hidden" name="network" value="{sta_ssid}">'
-                    + password_field +
-                    '<button type="submit">Save Connection</button>'
-                    '</form>'
-                )
-                saved_buttons += '<br><i>Connect to network and click Save Connection to connect on boot.</i>'
-        else:
-            if saved_connection_exists:
-                saved_buttons += (
-                    '<form id="delete-connection-form" method="POST" action="/delete_connection">'
-                    '<button type="submit">Delete Saved Connection</button>'
-                    '</form>'
-                )
-            saved_buttons += '<br><i>Connect to network and click Save Connection to connect on boot.</i>'
-        html = html.replace('{{SAVED_CONNECTION_BUTTON}}', saved_buttons)
-        return Response(html, headers={
-            'Content-Type': 'text/html',
-            'Cache-Control': 'no-cache, no-store, must-revalidate'
-        })
-    except OSError:
-        return Response("control_panel.html not found", status_code=404)
 
 @app.get('/get-config')
 async def get_json_config(request):
