@@ -7,16 +7,11 @@ import information
 import network
 import os
 from pubsub import getPubSub, PubSub, Topics, Origin
+from utils import  Utils, CONFIG_FILE
 
 app = Microdot()
-
-def load_status_template():
-    """Load the status response template."""
-    try:
-        with open("/static/html/status_response.html", "r") as f:
-            return f.read()
-    except OSError:
-        return None
+temp_buf = bytearray(1024)
+utils = Utils()
 
 @app.get('/')
 async def index(request):
@@ -26,6 +21,7 @@ async def index(request):
 # Images are handled in 1K chunks
 @app.route('/static/<path:path>')
 async def static(request, path):
+    
     if '..' in path:
         # directory traversal is not allowed
         return 'Not found', 404
@@ -34,10 +30,10 @@ async def static(request, path):
             def file_iterator():
                 with open(path, 'rb') as f:
                     while True:
-                        chunk = f.read(1024)
-                        if not chunk:
+                        count = f.readinto(temp_buf)
+                        if count == 0:
                             break
-                        yield chunk
+                        yield temp_buf[0: count]
 
             return Response(file_iterator(), headers={'Content-Type': 'image/png'})
         except OSError:
@@ -61,7 +57,6 @@ async def hotspot_detect(request):
 async def apple_success(request):
     return Response('', status_code=302, headers={'Location': 'http://10.0.0.1/'})
 
-
 # WebSocket endpoint with added debug prints for remote commands
 
 pubsub_remote_origin = None
@@ -76,9 +71,6 @@ async def _on_message_remote(payload: str, topic: str, origin: Origin):
             print(f"tx: {origin.name}: [{message.strip()}]. rx: {pubsub_remote_origin.name}")
         except Exception as e:
             print("Error broadcasting to remote client:", e)
-    
-
-
 
 @app.route('/ws')
 @with_websocket
@@ -155,12 +147,10 @@ async def control_panel_data(request):
     hotspot_mode_value = hotspot_control.get_hotspot_mode()
 
     try:
-        os.stat("saved_connection.txt")
+        data = utils.get_config()
         saved_connection_exists = True
-        with open("saved_connection.txt", "r") as f:
-            lines = f.read().splitlines()
-        saved_ssid = lines[0] if len(lines) >= 2 else None
-    except OSError:
+        saved_ssid = data["wirelessClient"]["ssid"]
+    except KeyError:
         saved_connection_exists = False
         saved_ssid = None
 
@@ -281,6 +271,27 @@ async def control_panel(request):
     except OSError:
         return Response("control_panel.html not found", status_code=404)
 
+@app.get('/get-config')
+async def get_json_config(request):
+    return utils.get_config()
+
+@app.post('/save-config')
+async def save_config(request):
+
+    data = utils.get_config()
+    payload = request.json
+    print(payload)
+    try:
+        key = payload["formName"]
+        data[key] = payload[key]
+
+        utils.write_config(data)
+    except Exception as e:
+        print(f"Could not update configuration: {e}")
+        return { 'Error': f'Could not update configuration {e}' }
+
+    return { 'ok': 'Configuration Saved' }
+
 @app.get('/scan_networks')
 async def get_networks(request):
     found_ssids = await information.do_wifi_scan()
@@ -312,15 +323,14 @@ async def set_hotspot_mode(request):
 # Connect to a network
 @app.post('/connect')
 async def connect_home_network(request):
+    print("Attempting to connect")
     global last_valid_password
-    ssid = request.form.get('network')
-    password = request.form.get('password')
+    print(f"json is {request.json}")
+    ssid = request.json['wirelessClient']['ssid']
+    password = request.json['wirelessClient']['password']
+
     if not ssid or not password:
-        template = load_status_template()
-        if template is None:
-            return Response("Template not found", status_code=500)
-        html = template.replace("{{MESSAGE}}", "You must select a valid SSID and enter a password to continue.")
-        return Response(html, headers={'Content-Type': 'text/html'})
+        return { "error": "You must select a valid SSID and enter a password to continue." }, 500
     
     sta = network.WLAN(network.STA_IF)
     # Activate interface first, then set the hostname.
@@ -332,18 +342,15 @@ async def connect_home_network(request):
         await asyncio.sleep(1)
     
     try:
+        print("trying to connect")
         sta.connect(ssid, password)
     except Exception as e:
-        return Response(f"Error during connect: {e}", status_code=500)
+        return { "error": f"Error during connect: {e}" }, 500
     
     timeout = 10
     while timeout > 0 and not sta.isconnected():
         await asyncio.sleep(1)
         timeout -= 1
-    
-    template = load_status_template()
-    if template is None:
-        return Response("Template not found", status_code=500)
     
     if sta.isconnected():
         last_valid_password = password
@@ -351,24 +358,25 @@ async def connect_home_network(request):
 
         # Attempt to save the connection on first connect attempt
         try:
-            with open("saved_connection.txt", "w") as f:
-                bytes_written = f.write(f"{ssid}\n{password}")
-                print(f"[DEBUG] Wrote saved_connection.txt with a total of {bytes_written} bytes")
+            data = utils.get_config()
+            data["wirelessClient"] = request.json["wirelessClient"]
+            utils.write_config(data)
+            return { "ok": "Connection saved." }
         except OSError as e:
-            return Response(f"Failed to save connection (OS error): {e}", status_code=500)
+            print(f"Failed to save connection (OS Error): {e}")
+            return { "error": f"Failed to save connection (OS Error): {e}" }, 500
         except Exception as e:
-            return Response(f"Failed to save connection: {e}", status_code=500)
+            print(f"Failed to save connection (OS Error): {e}")
+            return { "error": f"Failed to save connection: {e}" }, 500
     else:
         # Attempt to fall back to the previously saved connection if available
         try:
-            with open("saved_connection.txt", "r") as f:
-                lines = f.read().splitlines()
-            if len(lines) >= 2:
-                saved_ssid = lines[0]
-                saved_password = lines[1]
-            else:
-                saved_ssid = None
-                saved_password = None
+            print("Attempt fallback")
+            data = utils.get_config()
+
+            saved_ssid = data["wirelessClient"]["ssid"]
+            saved_password = data["wirelessClient"]["password"]
+            
         except OSError:
             saved_ssid = None
             saved_password = None
@@ -393,6 +401,8 @@ async def connect_home_network(request):
                 await asyncio.sleep(1)
                 sta.active(True)
                 sta.config(dhcp_hostname="tinklink")
+
+                return { "error": message}, 500
         else:
             message = "WiFi Connection Failed (Check Password)"
             sta.disconnect()
@@ -401,13 +411,15 @@ async def connect_home_network(request):
             await asyncio.sleep(1)
             sta.active(True)
             sta.config(dhcp_hostname="tinklink")
-    
-    html = template.replace("{{MESSAGE}}", message)
-    return Response(html, headers={'Content-Type': 'text/html'})
+
+            return { "error": message}, 500
+
+        return { "ok": message }
 
 # Disconnect from a network
 @app.post('/disconnect')
 async def disconnect_home_network(request):
+    print("calling disconnect")
     sta = network.WLAN(network.STA_IF)
     if sta.isconnected():
         sta.disconnect()
@@ -416,46 +428,39 @@ async def disconnect_home_network(request):
     while timeout > 0 and sta.isconnected():
         await asyncio.sleep(1)
         timeout -= 1
+
     message = "Disconnected" if not sta.isconnected() else "Disconnect failed. Please try again."
-    template = load_status_template()
-    if template is None:
-        return Response("Template not found", status_code=500)
-    html = template.replace("{{MESSAGE}}", message)
-    return Response(html, headers={'Content-Type': 'text/html'})
+    return json.dumps({ "ok": message }), 200, {'Content-Type': 'application/json' }
 
 # Save connection details
 @app.post('/save_connection')
 async def save_connection(request):
-    network_name = request.form.get('network')
-    password = request.form.get('password')
-    if not network_name or not password:
-        return Response("Missing network or password", status_code=400)
+    credentials = request.json
+
+    if not credentials["network_name"] or not credentials["password"]:
+        # code 400?, should be 500?
+        return { "error": "Missing network name or password" }
     try:
-        with open("saved_connection.txt", "w") as f:
-            bytes_written = f.write(f"{network_name}\n{password}")
-            print(f"[DEBUG] Wrote saved_connection.txt with a total of {bytes_written}")
+        data = utils.get_config()
+        data["wirelessClient"] = request.json
+        utils.write_config(data)
+
+        return { "ok": "Connection Saved" }
     except OSError as e:
-        return Response(f"Failed to save connection (OS error): {e}", status_code=500)
+        return { "error": f"Failed to save connection {e}" }, 500
     except Exception as e:
-        return Response(f"Failed to save connection: {e}", status_code=500)
-    template = load_status_template()
-    if template is None:
-        return Response("Template not found", status_code=500)
-    html = template.replace("{{MESSAGE}}", "Connection Saved")
-    return Response(html, headers={'Content-Type': 'text/html'})
+        return { "error": f"Failed to save connection {e}" }, 500
 
 # Delete saved connection details
 @app.post('/delete_connection')
 async def delete_connection(request):
     try:
-        os.remove("saved_connection.txt")
+        data = utils.get_config()
+        data["wirelessClient"] = None
+        utils.write_config(data)
+        return { "ok": "Saved Connection Deleted" }
     except OSError as e:
-        return Response("Error deleting saved connection: " + str(e), status_code=500)
-    template = load_status_template()
-    if template is None:
-        return Response("Template not found", status_code=500)
-    html = template.replace("{{MESSAGE}}", "Connection Deleted")
-    return Response(html, headers={'Content-Type': 'text/html'})
+        return { "error": f"Error Deleting Saved Connection: str{e}" }, 500
 
 @app.errorhandler(404)
 def not_found(request):

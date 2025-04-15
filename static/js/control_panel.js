@@ -2,6 +2,100 @@ function getValueForId(id) {
     return document.getElementById(id).value;
 }
 
+function getElement(id) {
+    return document.getElementById(id);
+}
+
+async function getData() {
+    const request = new Request('/get-config');
+
+    fetch(request)
+    .then(response => {
+        if(!response.ok) {
+            throw new Error('Network response error');
+        }
+        return response.json();
+    })
+    .then(data => {
+        masterKeys = ["tink", "tcpServer"];
+
+        for(var i in masterKeys) {
+            k = masterKeys[i];
+            for(const [key, value] of Object.entries(data[k])) {
+                getElement(`${k}-${key}`).value = value;
+            }
+        }
+
+        for(s in data.switchers) {
+            if(data.switchers[s].enabled) {
+                var i = 1;
+
+                for(const [key, value] of Object.entries(data.switchers[s].triggers)) {
+                    console.log(`${key} ===> ${value}`);
+
+                    console.log(value.name);
+                    console.log(value.preset);
+                    console.log(value.mode);
+                    console.log(value.profile);
+
+                    // ugly way to only create if this exists
+                    x = getElement(`trigger-${i}-name`);
+                    if(x === null) {
+                        addTrigger("triggers", i);
+                    }
+
+                    getElement(`trigger-${i}-name`).value = value.name;
+                    getElement(`trigger-${i}-preset`).value = value.preset;
+                    getElement(`trigger-${i}-mode`).value = value.mode;
+                    getElement(`trigger-${i}-profile`).value = value.profile;
+                    
+                    ++i;
+                }
+            }
+        }
+
+    })
+    .catch(error => {
+        console.error(`Got this error ${error}`)
+    });
+}
+
+async function networkChange(path, localBody) {
+    const headers = new Headers();
+    headers.append("Content-Type", "application/json");
+
+    if(localBody != null) {
+        b = localBody;
+    }
+    else {
+        b = null;
+    }
+
+    const request = new Request(path, {
+        method: "POST",
+        body: b,
+        headers: headers
+    });
+
+    fetch(request)
+    .then(response => {
+        if(!response.ok) {
+            throw new error("Network response error");
+        }
+        return response.json;
+    })
+    .then(data => {
+        console.log("Successful disconnect?");
+        if (data) {
+            showMessageBox(data, "success");
+        }
+    })
+    .catch(error => {
+        console.error(error);
+        showMessageBox(error, "error");
+    })
+}
+
 async function getControlPanelData() {
     const request = new Request('/control-panel-data');
 
@@ -16,38 +110,38 @@ async function getControlPanelData() {
         if(data) {
             // Populate hotspot/SSID data
             for(const [key, value] of Object.entries(data.ssid_info)) {
-                document.getElementById(key).innerHTML = value;
+                getElement(key).innerHTML = value;
             }
 
             // Populate STA data
             for(const [key, value] of Object.entries(data.sta)) {
-                document.getElementById(key).innerHTML = value;
+                getElement(key).innerHTML = value;
             }
 
             // Determine what displays on page
-            document.getElementById("disconnect-form").style.display = data.connected ? '' : 'none';
-            document.getElementById("sta-disconnect-form").style.display = data.connected ? '' : 'none';
+            getElement("disconnect-form").style.display = data.connected ? '' : 'none';
+            getElement("sta-disconnect-form").style.display = data.connected ? '' : 'none';
 
             if(data.connected) {
                 if(data.saved_connection_exists && data.sta.saved_ssid != null) {
                 
                     if(data.ssid_info.saved_ssid == data.sta.sta_ssid) {
-                        document.getElementById("delete-connection-form").style.display = '';
+                        getElement("delete-connection-form").style.display = '';
                     }
                     else {
-                        let owForm = document.getElementById("overwrite-connection-form");
+                        let owForm = getElement("overwrite-connection-form");
                         owForm.style.display = '';
                         // add in ssid and password
-                        document.getElementById("delete-connection-form").style.display = '';
+                        getElement("delete-connection-form").style.display = '';
                     }
             }
             else {
-                document.getElementById("save-connection-form").style.display = '';
+                //getElement("save-connection-form").style.display = '';
             }
             }
             else {
                 if(data.saved_connection_exists) {
-                    document.getElementById("delete-connection-form").style.display = '';
+                    getElement("delete-connection-form").style.display = '';
                 }
             }
         }
@@ -56,7 +150,7 @@ async function getControlPanelData() {
 
 async function populateNetworks() {
     
-    message = document.getElementById("loading-message");
+    message = getElement("loading-message");
     message.style.display = '';
 
     const request = new Request('/scan_networks');
@@ -71,14 +165,14 @@ async function populateNetworks() {
     .then(data => {
 
         if (data) {
-        // Data found, remove everything in list.
-        selectList = document.getElementById("network-select");
-        selectList.innerHTML = "";
-        
-        data.forEach(function(ssid) {
-            // Create new option for the SSID and add to list.
-            selectList.appendChild(createOption(ssid, ssid));
-        });
+            // Data found, remove everything in list.
+            selectList = getElement("network-select");
+            selectList.innerHTML = "";
+            
+            data.forEach(function(ssid) {
+                // Create new option for the SSID and add to list.
+                selectList.appendChild(createOption(ssid, ssid));
+            });
         }
     })
     .catch(error => {
@@ -89,40 +183,105 @@ async function populateNetworks() {
     });
 }
 
+async function updateConfig(formName) {
 
-function addTrigger(t) {
+    path = "/save-config"
+    const headers = new Headers();
+    headers.append("Content-Type", "application/json");
 
-    var num = document.getElementsByClassName("trigger-count").length;
+    const request = new Request(path, {
+        method: "POST",
+        body: formToJson(formName),
+        headers: headers
+    });
 
-    triggerRow = document.getElementById(t);
+    fetch(request)
+    .then(response => {
+        if(!response.ok) {
+            throw new Error('Network response error');
+        }
+        return response.json();
+    })
+    .then(data => {
+        if(data.ok) {
+            console.log(`Successfully saved ${formName}`);
+            showMessageBox(`Successfully saved ${formName}`, "success");
+        }
+    })
+    .catch(error => {
+        console.error("Could not save configuration");
+        showMessageBox(`Error: ${error}`, "error");
+    })
+    .finally(() => {
+
+    });
+}
+
+function showMessageBox(message, type) {
+    var m = getElement("message-box");
+    m.style.display = '';
+    m.classList = '';
+    m.classList.add("alert");
+    m.classList.add(type);
+
+    getElement("message-text").innerHTML = message;
+    
+}
+
+function addTrigger(t, num) {
+
+    if(num === null) {
+        num = document.getElementsByClassName("trigger-count").length;
+        num = Math.max(num, 1);
+    }
+
+    triggerRow = getElement(t);
 
     let name = document.createElement("input");
     name.id = `trigger-${num}-name`;
+    name.name = name.id;
     name.type = "text";
 
     triggerRow.appendChild(name);
 
-    let triggerInput = document.createElement("select");
-    triggerInput.id = `trigger-${num}-input`;
+    let triggerPreset = document.createElement("select");
+    triggerPreset.id = `trigger-${num}-preset`;
+    triggerPreset.name = triggerPreset.id;
     Array(6).keys().forEach(i => {
-        triggerInput.append(createOption(i + 1, `Input ${i + 1}`));
+        triggerPreset.append(createOption(i + 1, `Preset ${i + 1}`));
     });
 
-    triggerRow.appendChild(triggerInput);
+    triggerRow.appendChild(triggerPreset);
 
     let triggerMode = document.createElement("select")
     triggerMode.id = `trigger-${num}-mode`;
+    triggerMode.name = triggerMode.id;
     triggerMode.append(createOption("Remote", "Remote"));
     triggerMode.append(createOption("SVS", "SVS"));
     triggerRow.appendChild(triggerMode)
 
     let triggerProfile = document.createElement("select");
     triggerProfile.id = `trigger-${num}-profile`;
+    triggerProfile.name = triggerProfile.id;
     Array(12).keys().forEach(i => {
         triggerProfile.appendChild(createOption(i + 1, `Profile ${i + 1}`));
     });
 
     triggerRow.appendChild(triggerProfile);
+}
+
+function formToJson(formName) {
+    var object = {};
+    form = getElement(formName);
+    formData = new FormData(form);
+    formData.forEach(function(value, key) {
+        object[key] = TryParse(value);
+    });
+
+    var parent = {};
+    parent.formName = formName;
+    parent[formName] = object;
+    return JSON.stringify(parent);
 }
 
 function createOption(value, text) {
@@ -134,48 +293,37 @@ function createOption(value, text) {
 }
 
 function toggle() {
-    let x = getValueForId("tcp-server-enabled");
-    let y = getValueForId("tcp-server-port");
+    let en = getElement("tcpServer-enabled");
+    let port = getElement("tcpServer-port");
 
-    y.disabled = !(x === "true");
+    port.disabled = !(en.value === "true");
 }
 
 function toggleSerialTelnet() {
-    var x = getValueForId("extron-connection");
-    
-    var s = getValueForId("extron-serial");
-    var t = getValueForId("extron-telnet");
+    var ec = getElement("extron-connection").value;
 
-    if(x.value === "telnet") {
-        s.style.display = 'none';
-        t.style.display = '';
-    }
-    else {
-        s.style.display = '';
-        t.style.display = 'none';
-    }
+    getElement("extron-serial").style.display = (ec === "serial") ? '' : 'none';
+    getElement("extron-telnet").style.display = (ec === "telnet") ? '' : 'none';
 }
 
-function buildJson() {
-    tink = {
-        txPin: +getValueForId("tink-tx-pin"),
-        rxPin: +getValueForId("tink-rx-pin"),
-        uartId: +getValueForId("tink-uart")
+// Taken from: https://www.pietschsoft.com/post/2008/01/14/javascript-inttryparse-equivalent
+// Modified to also handle booleans, and otherwise pass strings through
+// unscathed.
+function TryParse(str, defaultValue) {
+    var retValue = defaultValue;
+    if(str !== null) {
+        if(str.length > 0) {
+            if (!isNaN(str)) {
+                retValue = parseInt(str);
+            }
+            else if(str.toLowerCase() === "true" || str.toLowerCase() === "false") {
+                retValue = str.toLowerCase() === "true";
+            }
+            else {
+                retValue = str;
+            }
+        }
     }
 
-    tcpServer = {
-        enabled: +getValueForId("tcp-server-enabled") === "true",
-        port: +getValueForId("tcp-server-port")
-    }
-
-    switcher = {
-        enabled: +getValueForId("extron-")
-    }
-
-    j = {
-        tink: tink,
-        tcpServer: tcpServer
-    };
-
-    return j;
+    return retValue;
 }

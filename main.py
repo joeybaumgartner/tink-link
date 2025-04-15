@@ -13,15 +13,14 @@ from extron_sw_vga import ExtronSwVga
 from extron_mav_crosspoint import ExtronMavCp
 import json
 from retrotink import Retrotink
-
+from utils import Utils, CONFIG_FILE
 
 # AP configuration constants
 SERVER_SSID = 'TinkLink-Hotspot'
 SERVER_IP = '10.0.0.1'
 SERVER_SUBNET = '255.255.255.0'
-CONFIG_FILE = "config.json"
-SAVED_CONNECTION_FILE = "saved_connection.txt"
 
+utils = Utils()
 
 def wifi_start_access_point(ip = SERVER_IP, subnet = SERVER_SUBNET, ssid = SERVER_SSID):
     wifi = network.WLAN(network.AP_IF)
@@ -40,20 +39,27 @@ def clear_sta_settings():
 
 
 def connect_saved_network():
-    """Reads saved_connection.txt and attempts to connect to that network."""
+    """Reads JSON configuration and attempts to connect to that network."""
     try:
-        with open(SAVED_CONNECTION_FILE, "r") as f:
-            data = f.read()
-        lines = data.splitlines()
 
-        if len(lines) >= 2:
-            saved_ssid = lines[0]
-            saved_password = lines[1]
-            print("Attempting to connect to saved network:", saved_ssid)
+        data = utils.get_config()["wirelessClient"]
+
+        if data is None:
+            print("Saved connection file incomplete, clearing STA settings.")
+            clear_sta_settings()
+        else:
+            saved_ssid = data["ssid"]
+            saved_password = data["password"]
+            try:
+                host_name = data["hostname"]
+            except KeyError as k:
+                host_name = "tinklink.local"
+                
+            print(f"Attempting to connect to saved network: {saved_ssid}")
 
             sta = network.WLAN(network.STA_IF)
             sta.active(True)  # Must activate before calling config()
-            sta.config(dhcp_hostname="tinklink")
+            sta.config(dhcp_hostname = host_name)
             sta.connect(saved_ssid, saved_password)
 
             timeout = 10
@@ -62,14 +68,15 @@ def connect_saved_network():
                 timeout -= 0.5
 
             if sta.isconnected():
-                print("Connected to saved network:", saved_ssid)
-                print("STA IP:", sta.ifconfig()[0])
-                print("Hostname set to tinklink.local")
+                print(f"Connected to saved network: {saved_ssid}")
+                print(f"STA IP: {sta.ifconfig()[0]}")
+                print(f"Hostname set to {host_name}.local")
             else:
                 print("Failed to connect to saved network:", saved_ssid)
-        else:
-            print("Saved connection file incomplete, clearing STA settings.")
-            clear_sta_settings()
+        
+    except KeyError as e:
+        print(f"No saved connection found, clearing STA settings: {e}.")
+        clear_sta_settings()
 
     except OSError:
         print("No saved connection found, clearing STA settings.")
@@ -84,22 +91,10 @@ def get_telnet_config(filename: str) -> dict:
     except OSError:
         print("No telnet server setup, continuing...")
         return None
-    
-
-def get_config(filename: str = CONFIG_FILE) -> dict:
-    try:
-        with open(filename) as f:
-            config = json.load(f)
-            return config
-    except OSError:
-        print("No config found")
-        return None
-
 
 async def main():
-    config = get_config()
+    config = utils.get_config()
 
-    
 
     # Wifi hotspot
 

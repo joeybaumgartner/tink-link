@@ -23,10 +23,46 @@
           });
         });
 
-        document.getElementById("loading-message").style.display = 'none';
+        getControlPanelData();
+        getData();
+
+        getElement("loading-message").style.display = 'none';
+        getElement("message-box").style.display = 'none';
+
+        getElement("disconnect-button").addEventListener("click", function() {
+          event.preventDefault();
+          networkChange("/disconnect");
+        });
+
+        /*getElement("/set-hotspot-mode").addEventListener("click", function() {
+          event.preventDefault();
+          networkChange("/set-hotspot-mode");
+        });
+        
+        getElement("sta-disconnect-button").addEventListener("click", function() {
+          event.preventDefault();
+          networkChange("/disconnect");
+        });*/
+
+        getElement("connect-button").addEventListener("click", function() {
+          event.preventDefault();
+          body = formToJson("wirelessClient")
+          networkChange("/connect", body);
+        });
+
+        getElement("tink-submit").addEventListener("click", function() {
+          event.preventDefault();
+          updateConfig("tink");
+        });
+
+        getElement("tcp-submit").addEventListener("click", function() {
+          event.preventDefault();
+          updateConfig("tcpServer");
+        });
+
+        getElement("add-trigger").addEventListener("click", addTrigger("triggers", null), {capture: true});
       });
 
-      
     </script>
   </head>
   <body><!--oncontextmenu="return false;"-->
@@ -35,11 +71,15 @@
       <h1>Control Panel</h1>
     </div>
     
+    <div id="message-box" class="alert">
+      <span class="closebtn" onclick="this.parentElement.style.display='none';">&times;</span>
+      <span id="message-text"></span>
+    </div>
+
     <!-- Main Content -->
     <div class="content">
       <!-- Hotspot Section -->
-      <div class="info-section" id="hotspot-info">
-        <fieldset>
+      <fieldset class="info-section" id="hotspot-info">
         <h3>Hotspot</h3>
         <div>
           Hotspot SSID: <span id="hotspot_ssid"></span><br>
@@ -51,270 +91,193 @@
           <form method="POST" action="/set_hotspot_mode">
             <input type="hidden" name="mode" value="5-minute_time_out">
             <button type="submit">5-Minute Time-Out</button>
-          <!--/form>
-          <form method="POST" action="/set_hotspot_mode"-->
             <input type="hidden" name="mode" value="always_on">
             <button type="submit">Always On</button>
           </form>
         </div>
-        </fieldset>
-      </div>
+      </fieldset>
   
       <!-- Connected Network Section -->
-      <div class="info-section" id="sta-info">
-        <fieldset>
-        <h3>Connected Network</h3>
-          <div>
-            STA Status: <span id="sta_status"></span><br>
-            Connected SSID: <span id="sta_ssid"></span><br>
-            IP Address: <span id="sta_ip"></span><br>
-          </div>
-          <div class="button-group">
-              <form id="disconnect-form" method="POST" action="/disconnect">
-              <button type="submit">Disconnect</button>
-              </form>
-          </div>
-        </fieldset>
-      </div>
+      <fieldset class="info-section" id="sta-info">
+      <h3>Connected Network</h3>
+        <div>
+          STA Status: <span id="sta_status"></span><br>
+          Connected SSID: <span id="sta_ssid"></span><br>
+          IP Address: <span id="sta_ip"></span><br>
+        </div>
+        <div class="button-group">
+            <form id="disconnect-form">
+              <button id="disconnect-button" type="submit">Disconnect</button>
+            </form>
+        </div>
+      </fieldset>
   
       <!-- Saved Connection Section -->
-      <div class="info-section" id="saved-connection-info">
-        <fieldset>
-          <h3>Saved Connection</h3>
-          <div>
-            Saved Connection: <span id="saved_ssid"></span>
-          </div>
-          <div class="button-group">
-            <form id="sta-disconnect-form" method="POST" action="/disconnect">
-            <button type="submit">Disconnect</button>
-            </form>
-          </div>
-        </fieldset>
-      </div>
+      <fieldset class="info-section" id="saved-connection-info">
+        <h3>Saved Connection</h3>
+        <div>
+          Saved Connection: <span id="saved_ssid"></span>
+        </div>
+        <div class="button-group">
+          <form id="sta-disconnect-form">
+          <button id="sta-disconnect-button" type="submit">Disconnect</button>
+          </form>
+        </div>
+      </fieldset>
 
         <!-- Deal with all of this later
-        {% if sta_status["connected"] %}
-          {% if saved["connection_exists"] and saved["ssid"] %}
-            {% if sta_status["ssid"] == saved["ssid"] %}
-              <form id="delete-connection-form" method="POST" action="/delete_connection">
-              <button type="submit">Delete Saved Connection</button>
-              </form>
-            {% else %}
-              <form id="overwrite-connection-form" method="POST" action="/save_connection">
-              <input type="hidden" name="network" value="{{ saved["ssid"] }}">
-              <input type="hidden" name="password" value="{{ saved["password"] }}">
-              <button type="submit">Overwrite Saved Connection</button>
-              </form>
 
-              <form id="delete-connection-form" method="POST" action="/delete_connection">
-              <button type="submit">Delete Saved Connection</button>
-              </form>
-            {% endif %}
-          {% else %}
-            <form id="save-connection-form" method="POST" action="/save_connection">
-            <input type="hidden" name="network" value="{{ sta_status["ssid"] }}">
-            <input type="hidden" name="password" value="{{ saved["password"] }}">
-            <button type="submit">Save Connection</button>
-            </form>
-            <br><i>Connect to network and click Save Connection to connect on boot.</i>
-          {% endif %}
-        {% else %}
-          {% if saved["connection_exists"] %}
-            <form id="delete-connection-form" method="POST" action="/delete_connection">
-            <button type="submit">Delete Saved Connection</button>
-            </form>
-            <br><i>Connect to network and click Save Connection to connect on boot.</i>
-          {% endif %}
-        {% endif %}
-        </div>
-      </div>
       -->
       <!-- Connect Form Section -->
-      <div class="form-section">
-        <fieldset>
+      
+      <fieldset class="form-section">
         <h3>Connect to a Network</h3>
 
         <p id="loading-message">Loading available networks, please wait...</p>
 
         <button onclick="populateNetworks()">Scan for Networks</button>
         
-        <form id="home-network-form" method="POST" action="/connect">
+        <form id="wirelessClient">
           <label for="network-select">Available Networks:</label>
-          <select id="network-select" name="network">
+          <select id="network-select" name="ssid">
               <option value="">Please press "Scan for Networks" to populate this list.</option>
           </select>
           <label for="network-password">Password:</label>
           <input type="password" id="network-password" name="password" placeholder="Enter password">
-          <button type="submit">Connect</button>
+          <button id="connect-button" type="submit">Connect</button>
         </form>
-        </fieldset>
-      </div>
+      </fieldset>
 
       <!-- RetroTINK4K Setup-->
-       <div class="form-section">
-       <fieldset>
-        <h3>RetroTINK Setup</h3>
-        <div class="serial">
-          <label for="tink-tx-pin">Transmit Pin</label>
-          <label for="tink-rx-pin">Receive Pin</label>
-          <label for="tink-uart">RetroTINK 4K UART</label>
-        </div>
-        <form id="tink-setup" class="form-section serial">
-          
-          <input type="number" id="tink-tx-pin" min="0" max="8">
-          <input type="number" id="tink-rx-pin" min="0" max="8">
-          
-          <select id="tink-uart">
-            <option value="0">Port 0</option>
-            <option value="1">Port 1</option>
-          </select>
-        </form>
-       </fieldset>
+      <fieldset id="tink-form" class="form-section">
+      <h3>RetroTINK Setup</h3>
+      <div class="serial">
+        <label for="tink-txPin">Transmit Pin</label>
+        <label for="tink-rxPin">Receive Pin</label>
+        <label for="tink-uartId">RetroTINK 4K UART</label>
       </div>
+      <form id="tink" class="form-section serial">
+        
+        <input type="number" name="txPin" id="tink-txPin" min="0" max="25">
+        <input type="number" name="rxPin" id="tink-rxPin" min="0" max="25">
+        
+        <select name="uartId" id="tink-uartId">
+          <option value="0">Port 0</option>
+          <option value="1">Port 1</option>
+        </select>
+
+        <button id="tink-submit" type="submit">Update</button>
+      </form>
+      </fieldset>
 
       <!-- TCP Server -->
-      <div id="tcp-server" class="form-section">
-       <fieldset>
+      <fieldset id="tcp-server" class="form-section">
         <h3>TCP Server</h3>
         <div class="tcp-server">
           <label for="tcp-server-enabled">Enabled:</label>
           <label for="tcp-server-port">Port:</label>
         </div>
-        <form id="tcp-server" class="tcp-server">
+        <form id="tcpServer" class="tcp-server">
           
-          <select id="tcp-server-enabled" onclick="toggle()">
+          <select name="enabled" id="tcpServer-enabled" onclick="toggle()">
             <option value=true>Yes</option>
             <option value=false>No</option>
           </select>
           
-          <input type="number" id="tcp-server-port" min="1" max="65535" value="1023">
+          <input type="number" name="port" id="tcpServer-port" min="1" max="65535" value="1023">
+          <button id="tcp-submit" type="submit">Update</button>
         </form>
-       </fieldset>
-       </div>
+      </fieldset>
 
        <!-- Switches/Matrices -->
-       <div class="form-section">
-        <fieldset>
-          <h3>Switch/Matrix Configuration</h3>
+      <fieldset id="switcher-form" class="form-section">
+        <h3>Switch/Matrix Configuration</h3>
 
-          <h4>Extron SW VGA</h4>
-          <div class="switcher">
-            <label for="extron-sw-vga-enabled">Enabled</label>
-            <label for="extron-type">Type</label>
-            <label for="extron-name">Name</label>
-            <label for="extron-connection">Connection</label>
-          </div>
-          <form id="extron-sw-vga" class="switcher">
-            
-            <select id="extron-sw-vga-enabled">
-              <option value="true">Yes</option>
-              <option value="false">No</option>
-            </select>
-            
-            <select id="extron-type">
-              <option value="sw-vga">SW VGA</option>
-              <option value="sw-cp">MAV/CrossPoint</option>
-            </select>
-            
-            <input type="text" id="extron-name">
-
-            <select id="extron-connection" onclick="toggleSerialTelnet()">
-              <option value="serial">Serial</option>
-              <option value="telnet">Telnet</option>
-            </select>
-          </form>
-
-          <div id="extron-serial">
-            <!-- should we go down to H5? -->
-            <h5>Serial Configuration</h5>
-              <div class="serial">
-                <label for="extron-tx-pin">Transmit Pin</label>
-                <label for="extron-rx-pin">Receive Pin</label>
-                <label for="extron-uart">Extron UART</label>
-              </div>
-              <div class="serial">
-                
-                <input id="extron-tx-pin" type="number" min="0" max="8">
-                <input id="extron-rx-pin" type="number" min="0" max="8">
-                <select id="extron-uart">
-                  <option value="0">Port 0</option>
-                  <option value="1">Port 1</option>
-                </select>
-              </div>
-            </div>
-
-            <div id="extron-telnet">
-              <h5>Telnet Connection</h5>
-              <div class="telnet">
-                <label for="telnet-hostname">Hostname</label>
-                <label for="telnet-port">Port</label>
-                <label for="telnet-username">Username</label>
-                <label for="telnet-password">Password</label>
-                <lable for="telnet-init-string">Init String</lable>
-              </div>
-              <div class="telnet">
-                <input id="telnet-hostname" type="text" placeholder="192.168.0.255">
-                <input id="telnet-port" type="number" min="1" max="65535" value="23">
-                <input id="telnet-username" type="text">
-                <input id="telnet-password" type="text">
-                <input id="telnet-init-string" type="text">
-              </div>
-            </div>
-          </fieldset>
-
-          <fieldset>
-            <h3>Triggers</h3>
-
-            <button id="add-trigger" onclick="addTrigger('triggers')">Add</button>
-
-            <div class="trigger">
-              <label for="trigger-1-name">Name</label>
-              <label for="trigger-1-input">Input</label>
-              <label for="trigger-1-mode">Mode</label>
-              <label for="trigger-1-profile">RT Profile</label>
-            </div>
-
-            <div id="triggers" class="trigger">
-              <input type="hidden" class="trigger-count">
-
-              <input type="text" for="trigger-1-name">
-
-              <select id="trigger-1-input">
-                <option value="1">Input 1</option>
-                <option value="2">Input 2</option>
-                <option value="3">Input 3</option>
-                <option value="4">Input 4</option>
-                <option value="5">Input 5</option>
-                <option value="6">Input 6</option>
-              </select>
-
-              <select id="trigger-1-mode">
-                <option value="Remote">Remote</option>
-                <option value="SVS">SVS</option>
-              </select>
-
-              <select id="trigger-1-profile">
-                <option value="1">Profile 1</option>
-                <option value="2">Profile 2</option>
-                <option value="3">Profile 3</option>
-                <option value="4">Profile 4</option>
-                <option value="5">Profile 5</option>
-                <option value="6">Profile 6</option>
-                <option value="7">Profile 7</option>
-                <option value="8">Profile 8</option>
-                <option value="9">Profile 9</option>
-                <option value="10">Profile 10</option>
-                <option value="11">Profile 11</option>
-                <option value="12">Profile 12</option>
-              </div>
-              
-            </div>
+        <h4>Extron SW VGA</h4>
+        <div class="switcher">
+          <label for="extron-sw-vga-enabled">Enabled</label>
+          <label for="extron-type">Type</label>
+          <label for="extron-name">Name</label>
+          <label for="extron-connection">Connection</label>
+        </div>
+        <form id="extron-sw-vga" class="switcher">
           
-          </form>
+          <select id="extron-sw-vga-enabled">
+            <option value="true">Yes</option>
+            <option value="false">No</option>
+          </select>
+          
+          <select id="extron-type">
+            <option value="sw-vga">SW VGA</option>
+            <option value="sw-cp">MAV/CrossPoint</option>
+          </select>
+          
+          <input type="text" id="extron-name">
+
+          <select id="extron-connection" onclick="toggleSerialTelnet()">
+            <option value="serial">Serial</option>
+            <option value="telnet">Telnet</option>
+          </select>
+        </form>
+
+        <div id="extron-serial">
+          <!-- should we go down to H5? -->
+          <h5>Serial Configuration</h5>
+          <div class="serial">
+            <label for="extron-tx-pin">Transmit Pin</label>
+            <label for="extron-rx-pin">Receive Pin</label>
+            <label for="extron-uart">Extron UART</label>
+          </div>
+          <div class="serial">
+            
+            <input name="txPin" id="extron-tx-pin" type="number" min="0" max="8">
+            <input name="rxPin" id="extron-rx-pin" type="number" min="0" max="8">
+            <select name="uartId" id="extron-uart">
+              <option value="0">Port 0</option>
+              <option value="1">Port 1</option>
+            </select>
+          </div>
+        </div>
+
+        <div id="extron-telnet">
+          <h5>Telnet Connection</h5>
+          <div class="telnet">
+            <label for="telnet-hostname">Hostname</label>
+            <label for="telnet-port">Port</label>
+            <label for="telnet-username">Username</label>
+            <label for="telnet-password">Password</label>
+            <label for="telnet-init-string">Init String</label>
+          </div>
+          <div class="telnet">
+            <input name="hostname" id="telnet-hostname" type="text" placeholder="192.168.0.255">
+            <input name="port" id="telnet-port" type="number" min="1" max="65535" value="23">
+            <input name="username" id="telnet-username" type="text">
+            <input name="password" id="telnet-password" type="text">
+            <input name="init_string" id="telnet-init-string" type="text">
+          </div>
+        </div>
+      </fieldset>
+
+      <form id="trigger-form" method="POST" action="/save-triggers">
+        <fieldset class="form-section">
+          <h3>Triggers</h3>
+
+          <button type="button" id="add-trigger">Add</button>
+
+          <div class="trigger">
+            <label for="trigger-name">Name</label>
+            <label for="trigger-preset">Preset</label>
+            <label for="trigger-mode">Mode</label>
+            <label for="trigger-profile">RT Profile</label>
+          </div>
+
+          <div id="triggers" class="trigger"></div>
+          
+          <button type="submit" action="update-triggers">Update</button>
         </fieldset>
-       </div>
-    </div>
-        
+      </form>
+    </div><!--content-->
+
     <!-- Footer -->
     <div class="footer">
       <a href="/remote-page" class="active">
