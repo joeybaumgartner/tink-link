@@ -85,7 +85,6 @@ async function networkChange(path, localBody) {
         return response.json;
     })
     .then(data => {
-        console.log("Successful disconnect?");
         if (data) {
             showMessageBox(data, "success");
         }
@@ -134,10 +133,10 @@ async function getControlPanelData() {
                         // add in ssid and password
                         getElement("delete-connection-form").style.display = '';
                     }
-            }
-            else {
-                //getElement("save-connection-form").style.display = '';
-            }
+                }
+                else {
+                    //getElement("save-connection-form").style.display = '';
+                }
             }
             else {
                 if(data.saved_connection_exists) {
