@@ -2,7 +2,7 @@ import json
 
 CONFIG_FILE = 'config.json'
 
-class Utils:
+class Config:
 
     def __init__(self):
         self._config = None
@@ -25,3 +25,11 @@ class Utils:
         except OSError as oe:
             print(f"Could not write config file {oe}")
             pass
+
+_config = None
+
+def getConfig() -> dict:
+    global _config
+    if _config == None:
+        _config = Config().get_config(CONFIG_FILE)
+    return _config

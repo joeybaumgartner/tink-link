@@ -6,7 +6,62 @@ function getElement(id) {
     return document.getElementById(id);
 }
 
-async function getData() {
+function addEventListeners() {
+    const forms = document.querySelectorAll("form");
+    forms.forEach(form => {
+      form.addEventListener("submit", function(e) {
+        e.preventDefault();
+        const button = this.querySelector("button");
+        if (button) {
+          button.style.backgroundColor = "#6F85D2";
+        }
+        setTimeout(() => { this.submit(); }, 500);
+      });
+    });
+
+    fetchControlPanelData();
+    fetchConfig();
+
+    getElement("loading-message").style.display = 'none';
+    getElement("message-box").style.display = 'none';
+
+    getElement("disconnect-button").addEventListener("click", function(event) {
+      event.preventDefault();
+      networkChange("/disconnect");
+    });
+
+    /*getElement("/set-hotspot-mode").addEventListener("click", function(event) {
+      event.preventDefault();
+      networkChange("/set-hotspot-mode");
+    });
+    
+    getElement("sta-disconnect-button").addEventListener("click", function(event) {
+      event.preventDefault();
+      networkChange("/disconnect");
+    });*/
+
+    getElement("connect-button").addEventListener("click", function(event) {
+      event.preventDefault();
+      body = formToJson("wirelessClient")
+      networkChange("/connect", body);
+    });
+
+    getElement("tink-submit").addEventListener("click", function(event) {
+      event.preventDefault();
+      updateConfig("tink");
+    });
+
+    getElement("tcp-submit").addEventListener("click", function(event) {
+      event.preventDefault();
+      updateConfig("tcpServer");
+    });
+
+    getElement("add-trigger").addEventListener("click", function() {
+        addTrigger("triggers", null);
+});
+}
+
+async function fetchConfig() {
     const request = new Request('/get-config');
 
     fetch(request)
@@ -31,12 +86,6 @@ async function getData() {
                 var i = 1;
 
                 for(const [key, value] of Object.entries(data.switchers[s].triggers)) {
-                    console.log(`${key} ===> ${value}`);
-
-                    console.log(value.name);
-                    console.log(value.preset);
-                    console.log(value.mode);
-                    console.log(value.profile);
 
                     // ugly way to only create if this exists
                     x = getElement(`trigger-${i}-name`);
@@ -95,7 +144,7 @@ async function networkChange(path, localBody) {
     })
 }
 
-async function getControlPanelData() {
+async function fetchControlPanelData() {
     const request = new Request('/control-panel-data');
 
     fetch(request)
@@ -274,7 +323,7 @@ function formToJson(formName) {
     form = getElement(formName);
     formData = new FormData(form);
     formData.forEach(function(value, key) {
-        object[key] = TryParse(value);
+        object[key] = JSON.parse(value);
     });
 
     var parent = {};
@@ -303,26 +352,4 @@ function toggleSerialTelnet() {
 
     getElement("extron-serial").style.display = (ec === "serial") ? '' : 'none';
     getElement("extron-telnet").style.display = (ec === "telnet") ? '' : 'none';
-}
-
-// Taken from: https://www.pietschsoft.com/post/2008/01/14/javascript-inttryparse-equivalent
-// Modified to also handle booleans, and otherwise pass strings through
-// unscathed.
-function TryParse(str, defaultValue) {
-    var retValue = defaultValue;
-    if(str !== null) {
-        if(str.length > 0) {
-            if (!isNaN(str)) {
-                retValue = parseInt(str);
-            }
-            else if(str.toLowerCase() === "true" || str.toLowerCase() === "false") {
-                retValue = str.toLowerCase() === "true";
-            }
-            else {
-                retValue = str;
-            }
-        }
-    }
-
-    return retValue;
 }

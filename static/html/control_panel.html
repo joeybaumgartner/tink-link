@@ -11,58 +11,8 @@
     <script src="/static/js/control_panel.js"></script>
     <script>
       document.addEventListener("DOMContentLoaded", function() {
-        const forms = document.querySelectorAll("form");
-        forms.forEach(form => {
-          form.addEventListener("submit", function(e) {
-            e.preventDefault();
-            const button = this.querySelector("button");
-            if (button) {
-              button.style.backgroundColor = "#6F85D2";
-            }
-            setTimeout(() => { this.submit(); }, 500);
-          });
-        });
-
-        getControlPanelData();
-        getData();
-
-        getElement("loading-message").style.display = 'none';
-        getElement("message-box").style.display = 'none';
-
-        getElement("disconnect-button").addEventListener("click", function() {
-          event.preventDefault();
-          networkChange("/disconnect");
-        });
-
-        /*getElement("/set-hotspot-mode").addEventListener("click", function() {
-          event.preventDefault();
-          networkChange("/set-hotspot-mode");
-        });
-        
-        getElement("sta-disconnect-button").addEventListener("click", function() {
-          event.preventDefault();
-          networkChange("/disconnect");
-        });*/
-
-        getElement("connect-button").addEventListener("click", function() {
-          event.preventDefault();
-          body = formToJson("wirelessClient")
-          networkChange("/connect", body);
-        });
-
-        getElement("tink-submit").addEventListener("click", function() {
-          event.preventDefault();
-          updateConfig("tink");
-        });
-
-        getElement("tcp-submit").addEventListener("click", function() {
-          event.preventDefault();
-          updateConfig("tcpServer");
-        });
-
-        getElement("add-trigger").addEventListener("click", addTrigger("triggers", null), {capture: true});
+        addEventListeners();
       });
-
     </script>
   </head>
   <body><!--oncontextmenu="return false;"-->

@@ -7,12 +7,12 @@ import information
 import network
 import os
 from pubsub import getPubSub, PubSub, Topics, Origin
-from utils import Utils, CONFIG_FILE
+from utils import Config, CONFIG_FILE
 
 WEB_ROOT = "/static"
 STREAM_THRESHOLD = 1024  # 1 KB
 
-utils = Utils()
+config = Config()
 app = Microdot()
 
 def load_status_template():
@@ -239,7 +239,7 @@ async def control_panel_data(request):
     hotspot_mode_value = hotspot_control.get_hotspot_mode()
 
     try:
-        data = utils.get_config()
+        data = config.get_config()
         saved_connection_exists = True
         saved_ssid = data["wirelessClient"]["ssid"]
     except KeyError:
@@ -272,19 +272,19 @@ async def control_panel_data(request):
 
 @app.get('/get-config')
 async def get_json_config(request):
-    return utils.get_config()
+    return config.get_config()
 
 @app.post('/save-config')
 async def save_config(request):
 
-    data = utils.get_config()
+    data = config.get_config()
     payload = request.json
     print(payload)
     try:
         key = payload["formName"]
         data[key] = payload[key]
 
-        utils.write_config(data)
+        config.write_config(data)
     except Exception as e:
         print(f"Could not update configuration: {e}")
         return { 'Error': f'Could not update configuration {e}' }
@@ -322,9 +322,8 @@ async def set_hotspot_mode(request):
 # Connect to a network
 @app.post('/connect')
 async def connect_home_network(request):
-    print("Attempting to connect")
+
     global last_valid_password
-    print(f"json is {request.json}")
     ssid = request.json['wirelessClient']['ssid']
     password = request.json['wirelessClient']['password']
 
@@ -341,7 +340,6 @@ async def connect_home_network(request):
         await asyncio.sleep(1)
     
     try:
-        print("trying to connect")
         sta.connect(ssid, password)
     except Exception as e:
         return { "error": f"Error during connect: {e}" }, 500
@@ -357,9 +355,9 @@ async def connect_home_network(request):
 
         # Attempt to save the connection on first connect attempt
         try:
-            data = utils.get_config()
+            data = config.get_config()
             data["wirelessClient"] = request.json["wirelessClient"]
-            utils.write_config(data)
+            config.write_config(data)
             return { "ok": "Connection saved." }
         except OSError as e:
             print(f"Failed to save connection (OS Error): {e}")
@@ -371,7 +369,7 @@ async def connect_home_network(request):
         # Attempt to fall back to the previously saved connection if available
         try:
             print("Attempt fallback")
-            data = utils.get_config()
+            data = config.get_config()
 
             saved_ssid = data["wirelessClient"]["ssid"]
             saved_password = data["wirelessClient"]["password"]
@@ -440,9 +438,9 @@ async def save_connection(request):
         # code 400?, should be 500?
         return { "error": "Missing network name or password" }
     try:
-        data = utils.get_config()
+        data = config.get_config()
         data["wirelessClient"] = request.json
-        utils.write_config(data)
+        config.write_config(data)
 
         return { "ok": "Connection Saved" }
     except OSError as e:
@@ -454,9 +452,9 @@ async def save_connection(request):
 @app.post('/delete_connection')
 async def delete_connection(request):
     try:
-        data = utils.get_config()
+        data = config.get_config()
         data["wirelessClient"] = None
-        utils.write_config(data)
+        config.write_config(data)
         return { "ok": "Saved Connection Deleted" }
     except OSError as e:
         return { "error": f"Error Deleting Saved Connection: str{e}" }, 500

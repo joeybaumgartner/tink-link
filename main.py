@@ -13,14 +13,12 @@ from extron_sw_vga import ExtronSwVga
 from extron_mav_crosspoint import ExtronMavCp
 import json
 from retrotink import Retrotink
-from utils import Utils, CONFIG_FILE
+from utils import getConfig
 
 # AP configuration constants
 SERVER_SSID = 'TinkLink-Hotspot'
 SERVER_IP = '10.0.0.1'
 SERVER_SUBNET = '255.255.255.0'
-
-utils = Utils()
 
 def wifi_start_access_point(ip = SERVER_IP, subnet = SERVER_SUBNET, ssid = SERVER_SSID):
     wifi = network.WLAN(network.AP_IF)
@@ -42,7 +40,7 @@ def connect_saved_network():
     """Reads JSON configuration and attempts to connect to that network."""
     try:
 
-        data = utils.get_config()["wirelessClient"]
+        data = getConfig().get("wirelessClient", {})
 
         if data is None:
             print("Saved connection file incomplete, clearing STA settings.")
@@ -50,10 +48,7 @@ def connect_saved_network():
         else:
             saved_ssid = data["ssid"]
             saved_password = data["password"]
-            try:
-                host_name = data["hostname"]
-            except KeyError as k:
-                host_name = "tinklink.local"
+            host_name = data.get("hostname", "tinklink.local")
                 
             print(f"Attempting to connect to saved network: {saved_ssid}")
 
@@ -93,8 +88,7 @@ def get_telnet_config(filename: str) -> dict:
         return None
 
 async def main():
-    config = utils.get_config()
-
+    config = getConfig()
 
     # Wifi hotspot
 
@@ -125,7 +119,7 @@ async def main():
 
     # Tink Support
 
-    tink_conf = config.get("tink", {})
+    tink_conf = getConfig().get("tink", {})
     tink = Retrotink.create_from_config(tink_conf)
     tink.start()
 
@@ -159,7 +153,7 @@ async def main():
 
     web_server.start_web_server() # includes remote and terminal websockets
 
-    tcpConfig = config.get("tcpServer", {})
+    tcpConfig = getConfig().get("tcpServer", {})
     if tcpConfig.get("enabled", False):
         tcp_async.start_serial_over_tcp_server(port = tcpConfig.get("port", 8023))
 
