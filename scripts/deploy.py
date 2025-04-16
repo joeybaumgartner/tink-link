@@ -13,7 +13,7 @@ WEB_EXTENSIONS = [".html", ".css", ".js", ".json", ".svg", ".txt"]
 
 # These are specific files that we want to skip compression
 COMP_IGNORE_PATTERNS = [
-    "control_panel.html"
+
 ]
 
 # Glob-style patterns to ignore (relative to project root). These will not be copied to DEPLOY_DIR
