@@ -5,6 +5,8 @@ body {
   background-color: #2F3136; /* background from old snippet */
   font-family: system-ui, monospace;
   color: white; /* default text color */
+  display: flex;
+  flex-direction: column;
 }
 
 /* Ensure full height and flex layout for the entire page */
@@ -12,11 +14,6 @@ html, body {
   height: 100%;
   margin: 0;
   padding: 0;
-}
-
-body {
-  display: flex;
-  flex-direction: column;
 }
 
 fieldset {
@@ -97,11 +94,57 @@ label {
   margin: 0.5rem 0 0.2rem;
 }
 
-select, input[type="password"] {
+select input[type="number"] {
+  display: block;
   width: 100%;
   padding: 0.5rem;
   margin-bottom: 1rem;
   box-sizing: border-box;
+  text-align: right;
+}
+
+select, input[type="password"], input[type="number"], input[type="text"] {
+  display: block;
+  width: 100%;
+  padding: 0.5rem;
+  margin-bottom: 1rem;
+  box-sizing: border-box;
+}
+
+.tcp-server {
+  display: grid;
+  grid-template-columns: 1fr 1fr;
+  gap: 10px;
+  justify-content: justify;
+}
+
+.serial {
+  display: grid;
+  grid-template-columns: 1fr 1fr 3fr;
+  gap: 10px;
+  justify-content: justify;
+}
+
+.telnet {
+  display: grid;
+  grid-template-columns: 2fr 1fr 2fr 2fr 2fr;
+  gap: 10px;
+  justify-content: justify;
+}
+
+
+.switcher {
+  display: grid;
+  grid-template-columns: 1fr 1fr 1fr 1fr;
+  gap: 10px;
+  justify-content: justify;
+}
+
+.trigger {
+  display: grid;
+  grid-template-columns: 3fr 2fr 2fr 2fr;
+  gap: 5px;
+  justify-content: space-evenly;
 }
 
 /* Buttons styling */
@@ -178,4 +221,45 @@ button:hover {
 .inactive {
   color: #6F85D2;
   text-decoration: underline;
+}
+
+/* Alert message stuff */
+.alert {
+  padding: 20px;
+  color: white;
+  margin-bottom: 15px;
+}
+
+.success {
+  background-color: #04aa6d;
+}
+
+.error {
+  background-color: #f44336;
+}
+
+.info {
+  background-color: #2196f3;
+}
+
+.warning {
+  background-color: #ff9800;
+}
+
+
+/* The close button */
+.closebtn {
+  margin-left: 15px;
+  color: white;
+  font-weight: bold;
+  float: right;
+  font-size: 22px;
+  line-height: 20px;
+  cursor: pointer;
+  transition: 0.3s;
+}
+
+/* When moving the mouse over the close button */
+.closebtn:hover {
+  color: black;
 }

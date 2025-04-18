@@ -1,0 +1,69 @@
+{
+    "tink": {   
+        "txPin": 1,
+        "rxPin": 0,
+        "uartId": 0
+    },
+    "hotspot": {
+        "enabled": true,
+        "mode": "timeout",
+        "timeout": 300,
+        "ssid": "TinkLink-Hotspot",
+        "ipAddress": "10.0.0.1",
+        "subnet": "255.255.255.0",
+        "captivePortalEnabled": true
+    },
+    "wirelessClient":{
+        "ssid": "my-network",
+        "password": "my-password",
+        "hostname": "tinklink"
+    },
+    "tcpServer":{
+        "enabled": true,
+        "port": 8023
+    },
+    "switchers": [{
+        "enabled": false,
+        "type": "ExtronMavCp",
+        "name": "Extron CrossPoint",
+        "connection": {
+            "host": "192.168.0.97",
+            "port": 23,
+            "username": "",
+            "password": "",
+            "initString": "W1CV"
+        },
+        "triggers": [{
+            "name": "NES",
+            "preset": 2,
+            "mode": "SVS",
+            "profile": 1
+        },{
+            "name":"Super Nintendo",
+            "preset": 2,
+            "mode": "Remote",
+            "profle": 2
+        }]
+    },{
+        "enabled": true,
+        "type": "ExtronSwVga",
+        "name": "Extron SW VGA",
+        "connection": {
+            "txPin": 21,
+            "rxPin": 20,
+            "uartId": 1
+        },
+        "triggers": [{
+            "name": "NES",
+            "input": 1,
+            "mode": "SVS",
+            "profile": 3
+        },{
+            "name":"Super Nintendo",
+            "input": 2,
+            "mode": "SVS",
+            "profile": 4
+        }]
+    }]
+}
+
